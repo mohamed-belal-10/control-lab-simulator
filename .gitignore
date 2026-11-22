@@ -1,0 +1,11 @@
+# build output (GitHub Actions builds the site)
+dist/
+# python / test artefacts
+__pycache__/
+*.pyc
+tests/output/
+# editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

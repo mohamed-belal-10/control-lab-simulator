@@ -1,0 +1,276 @@
+{
+ "app": "ControlLab-EP-Simulator",
+ "version": 2,
+ "parts": [
+  {
+   "id": "G2",
+   "type": "bench",
+   "x": 40,
+   "y": 40,
+   "rot": 0,
+   "props": {
+    "tag": "G2",
+    "volts": 24,
+    "ilim": 3
+   }
+  },
+  {
+   "id": "S1",
+   "type": "pushbutton",
+   "x": 240,
+   "y": 40,
+   "rot": 0,
+   "props": {
+    "tag": "S1",
+    "color": "green",
+    "contact": "NO",
+    "mode": "momentary",
+    "text": "A+"
+   }
+  },
+  {
+   "id": "air",
+   "type": "air",
+   "x": 40,
+   "y": 330,
+   "rot": 0,
+   "props": {
+    "tag": "0Z1",
+    "bar": 6
+   }
+  },
+  {
+   "id": "frl",
+   "type": "frl",
+   "x": 230,
+   "y": 280,
+   "rot": 0,
+   "props": {
+    "tag": "0Z2",
+    "set": 6
+   }
+  },
+  {
+   "id": "V1",
+   "type": "v52s",
+   "x": 420,
+   "y": 300,
+   "rot": 0,
+   "props": {
+    "tag": "1V1",
+    "coil": "24VDC",
+    "ytag": "Y1"
+   }
+  },
+  {
+   "id": "sil1",
+   "type": "silencer",
+   "x": 470,
+   "y": 450,
+   "rot": 0,
+   "props": {}
+  },
+  {
+   "id": "sil2",
+   "type": "silencer",
+   "x": 600,
+   "y": 450,
+   "rot": 0,
+   "props": {}
+  },
+  {
+   "id": "A1",
+   "type": "cylDA",
+   "x": 420,
+   "y": 110,
+   "rot": 0,
+   "props": {
+    "tag": "1A1",
+    "bore": "32",
+    "stroke": "100",
+    "speed": 250
+   }
+  }
+ ],
+ "wires": [
+  {
+   "id": "w0",
+   "kind": "wire",
+   "a": {
+    "c": "G2",
+    "t": "+"
+   },
+   "b": {
+    "c": "S1",
+    "t": "13"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w1",
+   "kind": "wire",
+   "a": {
+    "c": "S1",
+    "t": "14"
+   },
+   "b": {
+    "c": "V1",
+    "t": "c14a"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": [
+    [
+     287,
+     250
+    ],
+    [
+     438,
+     250
+    ]
+   ]
+  },
+  {
+   "id": "w2",
+   "kind": "wire",
+   "a": {
+    "c": "V1",
+    "t": "c14b"
+   },
+   "b": {
+    "c": "G2",
+    "t": "-"
+   },
+   "color": "#1a237e",
+   "gauge": "0.75",
+   "pts": [
+    [
+     458,
+     450
+    ],
+    [
+     162,
+     450
+    ]
+   ]
+  },
+  {
+   "id": "t3",
+   "kind": "tube",
+   "a": {
+    "c": "air",
+    "t": "out"
+   },
+   "b": {
+    "c": "frl",
+    "t": "in"
+   },
+   "color": "#1e88e5",
+   "pts": []
+  },
+  {
+   "id": "t4",
+   "kind": "tube",
+   "a": {
+    "c": "frl",
+    "t": "out"
+   },
+   "b": {
+    "c": "V1",
+    "t": "p1"
+   },
+   "color": "#1e88e5",
+   "pts": [
+    [
+     360,
+     332
+    ],
+    [
+     360,
+     420
+    ],
+    [
+     554,
+     420
+    ]
+   ]
+  },
+  {
+   "id": "t5",
+   "kind": "tube",
+   "a": {
+    "c": "V1",
+    "t": "p4"
+   },
+   "b": {
+    "c": "A1",
+    "t": "cap"
+   },
+   "color": "#1e88e5",
+   "pts": [
+    [
+     530,
+     260
+    ],
+    [
+     439,
+     260
+    ]
+   ]
+  },
+  {
+   "id": "t6",
+   "kind": "tube",
+   "a": {
+    "c": "V1",
+    "t": "p2"
+   },
+   "b": {
+    "c": "A1",
+    "t": "rod"
+   },
+   "color": "#1e88e5",
+   "pts": [
+    [
+     578,
+     240
+    ],
+    [
+     561,
+     240
+    ]
+   ]
+  },
+  {
+   "id": "t7",
+   "kind": "tube",
+   "a": {
+    "c": "V1",
+    "t": "p5"
+   },
+   "b": {
+    "c": "sil1",
+    "t": "p"
+   },
+   "color": "#1e88e5",
+   "pts": []
+  },
+  {
+   "id": "t8",
+   "kind": "tube",
+   "a": {
+    "c": "V1",
+    "t": "p3"
+   },
+   "b": {
+    "c": "sil2",
+    "t": "p"
+   },
+   "color": "#1e88e5",
+   "pts": []
+  }
+ ],
+ "name": "3 \u00b7 Direct cylinder control (5/2 single solenoid)"
+}

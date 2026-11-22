@@ -1,0 +1,371 @@
+{
+ "app": "ControlLab-EP-Simulator",
+ "version": 2,
+ "parts": [
+  {
+   "id": "G2",
+   "type": "bench",
+   "x": 40,
+   "y": 40,
+   "rot": 0,
+   "props": {
+    "tag": "G2",
+    "volts": 24,
+    "ilim": 3
+   }
+  },
+  {
+   "id": "X1",
+   "type": "tblock",
+   "x": 40,
+   "y": 220,
+   "rot": 0,
+   "props": {
+    "tag": "X1 +24V",
+    "ways": 4,
+    "bridged": true,
+    "bridgeN": 0,
+    "color": "red"
+   }
+  },
+  {
+   "id": "X2",
+   "type": "tblock",
+   "x": 40,
+   "y": 420,
+   "rot": 0,
+   "props": {
+    "tag": "X2 0V",
+    "ways": 4,
+    "bridged": true,
+    "bridgeN": 0,
+    "color": "blue"
+   }
+  },
+  {
+   "id": "S0",
+   "type": "pushbutton",
+   "x": 240,
+   "y": 40,
+   "rot": 0,
+   "props": {
+    "tag": "S0",
+    "color": "red",
+    "contact": "NC",
+    "mode": "momentary",
+    "text": "STOP"
+   }
+  },
+  {
+   "id": "S1",
+   "type": "pushbutton",
+   "x": 340,
+   "y": 40,
+   "rot": 0,
+   "props": {
+    "tag": "S1",
+    "color": "green",
+    "contact": "NO",
+    "mode": "momentary",
+    "text": "START"
+   }
+  },
+  {
+   "id": "K1",
+   "type": "relay4",
+   "x": 460,
+   "y": 200,
+   "rot": 0,
+   "props": {
+    "tag": "K1",
+    "coil": "24VDC",
+    "model": "MY4 (no LED)"
+   }
+  },
+  {
+   "id": "H1",
+   "type": "lamp",
+   "x": 660,
+   "y": 60,
+   "rot": 0,
+   "props": {
+    "tag": "H1",
+    "color": "green",
+    "rating": "24V AC/DC"
+   }
+  },
+  {
+   "id": "H2",
+   "type": "lamp",
+   "x": 760,
+   "y": 60,
+   "rot": 0,
+   "props": {
+    "tag": "H2",
+    "color": "red",
+    "rating": "24V AC/DC"
+   }
+  }
+ ],
+ "wires": [
+  {
+   "id": "w0",
+   "kind": "wire",
+   "a": {
+    "c": "G2",
+    "t": "+"
+   },
+   "b": {
+    "c": "X1",
+    "t": "a1"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w1",
+   "kind": "wire",
+   "a": {
+    "c": "G2",
+    "t": "-"
+   },
+   "b": {
+    "c": "X2",
+    "t": "a1"
+   },
+   "color": "#1a237e",
+   "gauge": "0.75",
+   "pts": [
+    [
+     180,
+     180
+    ],
+    [
+     180,
+     380
+    ],
+    [
+     62,
+     380
+    ]
+   ]
+  },
+  {
+   "id": "w2",
+   "kind": "wire",
+   "a": {
+    "c": "X1",
+    "t": "b1"
+   },
+   "b": {
+    "c": "S0",
+    "t": "11"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": [
+    [
+     62,
+     340
+    ],
+    [
+     210,
+     340
+    ],
+    [
+     210,
+     160
+    ],
+    [
+     269,
+     160
+    ]
+   ]
+  },
+  {
+   "id": "w3",
+   "kind": "wire",
+   "a": {
+    "c": "S0",
+    "t": "12"
+   },
+   "b": {
+    "c": "S1",
+    "t": "13"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w4",
+   "kind": "wire",
+   "a": {
+    "c": "S1",
+    "t": "14"
+   },
+   "b": {
+    "c": "K1",
+    "t": "13"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w5",
+   "kind": "wire",
+   "a": {
+    "c": "S0",
+    "t": "12"
+   },
+   "b": {
+    "c": "K1",
+    "t": "9"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w6",
+   "kind": "wire",
+   "a": {
+    "c": "K1",
+    "t": "5"
+   },
+   "b": {
+    "c": "K1",
+    "t": "13"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w7",
+   "kind": "wire",
+   "a": {
+    "c": "K1",
+    "t": "14"
+   },
+   "b": {
+    "c": "X2",
+    "t": "b1"
+   },
+   "color": "#1a237e",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w8",
+   "kind": "wire",
+   "a": {
+    "c": "X1",
+    "t": "b2"
+   },
+   "b": {
+    "c": "K1",
+    "t": "10"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w9",
+   "kind": "wire",
+   "a": {
+    "c": "K1",
+    "t": "6"
+   },
+   "b": {
+    "c": "H1",
+    "t": "X1"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w10",
+   "kind": "wire",
+   "a": {
+    "c": "H1",
+    "t": "X2"
+   },
+   "b": {
+    "c": "X2",
+    "t": "b2"
+   },
+   "color": "#1a237e",
+   "gauge": "0.75",
+   "pts": [
+    [
+     706,
+     560
+    ],
+    [
+     90,
+     560
+    ]
+   ]
+  },
+  {
+   "id": "w11",
+   "kind": "wire",
+   "a": {
+    "c": "X1",
+    "t": "b3"
+   },
+   "b": {
+    "c": "K1",
+    "t": "11"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w12",
+   "kind": "wire",
+   "a": {
+    "c": "K1",
+    "t": "3"
+   },
+   "b": {
+    "c": "H2",
+    "t": "X1"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w13",
+   "kind": "wire",
+   "a": {
+    "c": "H2",
+    "t": "X2"
+   },
+   "b": {
+    "c": "X2",
+    "t": "b3"
+   },
+   "color": "#1a237e",
+   "gauge": "0.75",
+   "pts": [
+    [
+     806,
+     580
+    ],
+    [
+     118,
+     580
+    ]
+   ]
+  }
+ ],
+ "name": "2 \u00b7 Self-holding relay (START / STOP latch)"
+}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Control Lab — Real-Parts Electro-Pneumatic Circuit Simulator</title>
+<meta name="description" content="Free browser simulator for relay control and electro-pneumatic circuits built from real parts: 24 V supplies, MY4 relays, push buttons, sensors, solenoid valves, cylinders and wiring ducts — with automatic circuit checking.">
+<meta property="og:title" content="Control Lab — Real-Parts Electro-Pneumatic Simulator">
+<meta property="og:description" content="Build, wire, run and troubleshoot relay and electro-pneumatic control circuits with realistic components, right in the browser.">
+<meta name="theme-color" content="#0d1730">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d1730'/%3E%3Cpath d='M36 6 14 36h14l-4 22 26-32H36z' fill='%23ffb020'/%3E%3C/svg%3E">
+<style>
+/*@@CSS@@*/
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand"><span class="logo">⚡</span><div><b>Control Lab</b><small>Real-parts electro-pneumatic simulator</small></div></div>
+    <div class="tb-group">
+      <button data-cmd="new" title="New circuit">New</button>
+      <button data-cmd="open" title="Open a circuit file (Ctrl+O)">Open</button>
+      <button data-cmd="export" title="Save the circuit file (Ctrl+S)">Save</button>
+      <button data-cmd="examples" title="Load an example circuit">Examples</button>
+      <button data-cmd="bom" title="Parts &amp; wire list">Parts list</button>
+      <button data-cmd="check" title="Trace the circuit and find wrong connections">🩺 Check</button>
+    </div>
+    <div class="tb-group">
+      <button data-cmd="undo" title="Undo (Ctrl+Z)">↶</button>
+      <button data-cmd="redo" title="Redo (Ctrl+Y)">↷</button>
+      <button data-cmd="rotate" title="Rotate selected (R)">⟳</button>
+      <button data-cmd="duplicate" title="Duplicate selected (Ctrl+D)">⧉</button>
+      <button data-cmd="delete" title="Delete selected (Del)">🗑</button>
+    </div>
+    <div class="tb-group" id="toolGroup">
+      <button data-tool="select" class="on" title="Select / move / wire (S)">✥ Edit</button>
+      <button data-tool="meter" title="Multimeter (M)">🔧 Multimeter</button>
+    </div>
+    <div class="tb-group" id="wireColors" title="Colour for new wires"></div>
+    <div class="tb-group sim">
+      <button data-cmd="run" id="btnRun" class="run" title="Run / pause (Space)">▶ Run</button>
+      <button data-cmd="reset" title="Stop and reset all parts to their initial state">■ Reset</button>
+      <select id="simSpeed" title="Simulation speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select>
+      <span id="simClock">0.00 s</span>
+      <label class="chk" title="Animate current flow in wires"><input type="checkbox" id="optFlow" checked> flow</label>
+      <label class="chk" title="Lay new wires through the wiring ducts automatically"><input type="checkbox" id="optDuct" checked> via ducts</label>
+      <button data-cmd="help" title="How to use">?</button>
+    </div>
+  </header>
+  <aside id="palette">
+    <input id="paletteSearch" type="search" placeholder="Search parts…">
+    <div id="paletteList"></div>
+  </aside>
+  <main id="stage">
+    <svg id="canvas" xmlns="http://www.w3.org/2000/svg">
+      <defs id="defs"></defs>
+      <rect id="bg" width="100%" height="100%" fill="url(#gridPat)"/>
+      <g id="world">
+        <g id="layerFloor"></g>
+        <g id="layerParts"></g>
+        <g id="layerWires"></g>
+        <g id="layerCover"></g>
+        <g id="layerOverlay"></g>
+      </g>
+    </svg>
+    <div id="zoomCtl">
+      <button data-cmd="zoomIn" title="Zoom in">+</button>
+      <button data-cmd="zoomOut" title="Zoom out">−</button>
+      <button data-cmd="zoomFit" title="Fit circuit">⤢</button>
+      <span id="zoomLbl">100%</span>
+    </div>
+    <div id="meter" class="hidden">
+      <div class="m-head">DIGITAL MULTIMETER</div>
+      <div class="m-lcd" id="meterLcd">----</div>
+      <div class="m-sub" id="meterSub">Pick the red probe terminal</div>
+      <div class="m-modes">
+        <button data-mmode="V" class="on">V ⎓/∿</button>
+        <button data-mmode="R">Ω / continuity</button>
+        <button data-mmode="clear">Clear probes</button>
+      </div>
+    </div>
+    <div id="hint"></div>
+    <button id="docChip" class="hidden"></button>
+    <div id="emptyHint" class="hidden"><b>Empty board</b><span>Drag parts from the left panel, or open <b>Examples</b> / <b>Open</b> a saved circuit.</span></div>
+  </main>
+  <aside id="props"></aside>
+  <footer id="status">
+    <span id="stState">● Stopped</span>
+    <span id="stInfo"></span>
+    <span id="stFaults"></span>
+    <span class="grow"></span>
+    <span id="stTip">Tip: click a terminal to start a wire · click a blue port to start a tube · drag parts from the left</span>
+  </footer>
+</div>
+<div id="modal" class="hidden"><div class="modal-box"><div class="modal-head"><b id="modalTitle"></b><button id="modalX">✕</button></div><div id="modalBody"></div><div id="modalBtns"></div></div></div>
+<input type="file" id="fileInput" accept=".ccs,.json,.html,.htm" class="hidden">
+<script>
+/*@@JS@@*/
+</script>
+</body>
+</html>

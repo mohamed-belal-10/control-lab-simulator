@@ -1,0 +1,209 @@
+{
+ "app": "ControlLab-EP-Simulator",
+ "version": 2,
+ "parts": [
+  {
+   "id": "mains",
+   "type": "mains",
+   "x": 40,
+   "y": 30,
+   "rot": 0,
+   "props": {
+    "tag": "Mains"
+   }
+  },
+  {
+   "id": "Q1",
+   "type": "mcb",
+   "x": 60,
+   "y": 180,
+   "rot": 0,
+   "props": {
+    "tag": "Q1",
+    "In": "6"
+   }
+  },
+  {
+   "id": "G1",
+   "type": "psu",
+   "x": 240,
+   "y": 180,
+   "rot": 0,
+   "props": {
+    "tag": "G1",
+    "vadj": 24
+   }
+  },
+  {
+   "id": "S1",
+   "type": "pushbutton",
+   "x": 520,
+   "y": 40,
+   "rot": 0,
+   "props": {
+    "tag": "S1",
+    "color": "green",
+    "contact": "NO",
+    "mode": "momentary",
+    "text": "ON"
+   }
+  },
+  {
+   "id": "H1",
+   "type": "lamp",
+   "x": 640,
+   "y": 60,
+   "rot": 0,
+   "props": {
+    "tag": "H1",
+    "color": "green",
+    "rating": "24V AC/DC"
+   }
+  }
+ ],
+ "wires": [
+  {
+   "id": "w0",
+   "kind": "wire",
+   "a": {
+    "c": "mains",
+    "t": "L"
+   },
+   "b": {
+    "c": "Q1",
+    "t": "1"
+   },
+   "color": "#795548",
+   "gauge": "1.5",
+   "pts": []
+  },
+  {
+   "id": "w1",
+   "kind": "wire",
+   "a": {
+    "c": "mains",
+    "t": "N"
+   },
+   "b": {
+    "c": "Q1",
+    "t": "3"
+   },
+   "color": "#4fc3f7",
+   "gauge": "1.5",
+   "pts": []
+  },
+  {
+   "id": "w2",
+   "kind": "wire",
+   "a": {
+    "c": "Q1",
+    "t": "2"
+   },
+   "b": {
+    "c": "G1",
+    "t": "L"
+   },
+   "color": "#795548",
+   "gauge": "1.5",
+   "pts": []
+  },
+  {
+   "id": "w3",
+   "kind": "wire",
+   "a": {
+    "c": "Q1",
+    "t": "4"
+   },
+   "b": {
+    "c": "G1",
+    "t": "N"
+   },
+   "color": "#4fc3f7",
+   "gauge": "1.5",
+   "pts": []
+  },
+  {
+   "id": "w4",
+   "kind": "wire",
+   "a": {
+    "c": "mains",
+    "t": "PE"
+   },
+   "b": {
+    "c": "G1",
+    "t": "FG"
+   },
+   "color": "gy",
+   "gauge": "1.5",
+   "pts": [
+    [
+     190,
+     150
+    ],
+    [
+     190,
+     330
+    ],
+    [
+     330,
+     330
+    ]
+   ]
+  },
+  {
+   "id": "w5",
+   "kind": "wire",
+   "a": {
+    "c": "G1",
+    "t": "+V2"
+   },
+   "b": {
+    "c": "S1",
+    "t": "13"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w6",
+   "kind": "wire",
+   "a": {
+    "c": "S1",
+    "t": "14"
+   },
+   "b": {
+    "c": "H1",
+    "t": "X1"
+   },
+   "color": "#d32f2f",
+   "gauge": "0.75",
+   "pts": []
+  },
+  {
+   "id": "w7",
+   "kind": "wire",
+   "a": {
+    "c": "H1",
+    "t": "X2"
+   },
+   "b": {
+    "c": "G1",
+    "t": "-V2"
+   },
+   "color": "#1a237e",
+   "gauge": "0.75",
+   "pts": [
+    [
+     686,
+     340
+    ],
+    [
+     384,
+     340
+    ]
+   ]
+  }
+ ],
+ "name": "1 \u00b7 Mains \u2192 MCB \u2192 24 V power supply \u2192 lamp"
+}
