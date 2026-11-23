@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 — select, group and align
+
+- **Sweep-select:** hold the left button on empty board and drag; every part the box touches is selected live. <kbd>Shift</kbd> adds to the selection, <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all.
+- **Panning** moved to right-drag / middle-drag (mouse wheel still zooms).
+- **Groups:** <kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd>. A group selects, moves, rotates (about its centre) and duplicates as one unit; <kbd>Alt</kbd>+click picks a single member. Groups are saved in circuit files.
+- **Align** (left, centre, right, top, middle, bottom) and **distribute** (horizontal, vertical) for parts and groups, from the properties panel.
+- Arrow keys nudge the selection (5 mm, <kbd>Shift</kbd> = 1 mm).
+
 ## 1.0.0 — first public release
 
 ### Parts

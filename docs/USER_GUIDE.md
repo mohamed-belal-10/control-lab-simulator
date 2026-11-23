@@ -4,6 +4,7 @@ This guide walks through every tool in Control Lab. For a 2½-minute visual tour
 
 - [The screen](#the-screen)
 - [Placing parts](#placing-parts)
+- [Groups, align and distribute](#groups-align-and-distribute)
 - [Wiring and tubing](#wiring-and-tubing)
 - [Setting up parts](#setting-up-parts)
 - [Running the circuit](#running-the-circuit)
@@ -27,7 +28,7 @@ This guide walks through every tool in Control Lab. For a 2½-minute visual tour
 |---|---|
 | **Toolbar** (top) | New, Open, Save, Examples, Parts list, 🩺 Check · undo/redo/rotate/duplicate/delete · Edit / Multimeter tool · wire colour · ▶ Run, ■ Reset, speed, *flow* (animate current), *via ducts* (auto-route wires) · **?** help |
 | **Parts library** (left) | All parts by category, with a search box. Drag a part onto the board, or click it to drop it in the middle. |
-| **Board** (centre) | Drag empty space to pan, use the mouse wheel to zoom, and press <kbd>F</kbd> to fit everything on screen. The 🩺 chip appears top-left after **Run**. |
+| **Board** (centre) | Left-drag on empty space to select, right-drag (or middle-drag) to pan, use the mouse wheel to zoom, and press <kbd>F</kbd> to fit everything on screen. The 🩺 chip appears top-left after **Run**. |
 | **Properties** (right) | Settings for the selected part or wire, live readings, real wiring notes and a terminal list. With nothing selected, it shows the fault list and quick-start tips. |
 | **Status bar** (bottom) | Simulation state, supply voltage and current, and the error/warning count. |
 
@@ -35,10 +36,23 @@ This guide walks through every tool in Control Lab. For a 2½-minute visual tour
 
 - **Drag** a part from the library onto the board. Parts snap to a 10 px grid.
 - **Search**: type e.g. `relay`, `duct` or `capacitive` to filter the library.
-- **Select**: click a part. <kbd>Shift</kbd>+click adds to the selection, and <kbd>Shift</kbd>+drag on empty space box-selects.
-- **Move**: drag a selected part or group. Wires inside the group keep their bends.
+- **Select**: click a part. <kbd>Shift</kbd>+click adds to the selection. <kbd>Ctrl</kbd>+<kbd>A</kbd> selects everything.
+- **Sweep-select**: hold the left button on empty board and drag. Every part the box touches is selected **live** as you sweep over it. Hold <kbd>Shift</kbd> (or <kbd>Ctrl</kbd>) while starting the sweep to add to the current selection.
+- **Move**: drag any selected part and the whole selection moves with it. Wires that run between moved parts keep their bends. Arrow keys nudge by one grid step (5 mm); <kbd>Shift</kbd>+arrow nudges 1 mm.
+- **Pan**: right-drag or middle-drag. Zoom with the mouse wheel.
 - **Rotate** <kbd>R</kbd> · **Duplicate** <kbd>Ctrl</kbd>+<kbd>D</kbd> · **Delete** <kbd>Del</kbd> · **Undo / Redo** <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd>.
 - Tags (K1, S1, H1 …) are numbered automatically and can be changed in the properties.
+
+## Groups, align and distribute
+
+- **Group** (<kbd>Ctrl</kbd>+<kbd>G</kbd> or the **▣ Group** button): the selected parts become one unit, shown with a purple *GROUP* outline. Clicking any member selects the whole group, so it moves, rotates and duplicates together. Groups are saved in the circuit file.
+- **Rotate a group** (<kbd>R</kbd>): the group turns 90° about its own centre, keeping its layout.
+- **Pick one member**: <kbd>Alt</kbd>+click a part inside a group to select only that part. **⬚ Leave group** in its properties takes it out of the group.
+- **Ungroup** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> or **⬚ Ungroup**).
+- **Duplicate a group**: the copy becomes a new group of its own, with its internal wires copied.
+- **Align** (right panel, with two or more units selected): left edges · centres · right edges · top edges · middles · bottom edges. Alignment uses the edges of the whole selection. **A group counts as one unit**, so it moves as a block and its inside layout is kept.
+- **Distribute** (three or more units): equal gaps horizontally or vertically. The two outermost units stay where they are.
+- Reed switches clamped on a cylinder always follow their cylinder and are never moved on their own.
 
 ## Wiring and tubing
 
@@ -153,6 +167,12 @@ A **“!”** badge on a part shows a problem. Hover it to read it, or see the l
 | <kbd>R</kbd> | Rotate selection |
 | <kbd>Del</kbd> / <kbd>Backspace</kbd> | Delete selection or wire |
 | <kbd>Ctrl</kbd>+<kbd>D</kbd> | Duplicate |
+| <kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd> | Group / ungroup the selection |
+| <kbd>Ctrl</kbd>+<kbd>A</kbd> | Select all |
+| <kbd>Alt</kbd>+click | Select one part inside a group |
+| Arrow keys | Nudge the selection 5 mm (<kbd>Shift</kbd> = 1 mm) |
+| Left-drag on empty board | Sweep-select (live) |
+| Right-drag / middle-drag | Pan |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> | Undo / redo |
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>O</kbd> | Save / open circuit |
 | <kbd>M</kbd> / <kbd>S</kbd> | Multimeter / edit tool |

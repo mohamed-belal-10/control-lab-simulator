@@ -37,7 +37,7 @@ CCS.circuit = {
   toJSON() {
     return {
       app: 'ControlLab-EP-Simulator', version: 2,
-      parts: this.parts.map(p => ({ id: p.id, type: p.type, x: Math.round(p.x), y: Math.round(p.y), rot: p.rot || 0, props: p.props })),
+      parts: this.parts.map(p => ({ id: p.id, type: p.type, x: Math.round(p.x), y: Math.round(p.y), rot: p.rot || 0, ...(p.group ? { group: p.group } : {}), props: p.props })),
       wires: this.wires.map(w => ({ id: w.id, kind: w.kind, a: w.a, b: w.b, color: w.color, gauge: w.gauge, pts: w.pts || [], ...(w.routed ? { routed: true } : {}) })),
     };
   },
@@ -50,7 +50,7 @@ CCS.circuit = {
       const props = Object.assign({}, p.props || {});
       if (p.type === 'tblock' && props.ways === undefined) { props.ways = 4; if (props.bridged === undefined) props.bridged = false; }
       const c = CCS.newPart(p.type, p.x, p.y, props);
-      c.id = p.id; c.rot = p.rot || 0;
+      c.id = p.id; c.rot = p.rot || 0; if (p.group) c.group = String(p.group);
       parts.push(c);
     });
     this.parts = parts;

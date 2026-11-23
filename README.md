@@ -1,7 +1,7 @@
 # ⚡ Control Lab: a real-parts electro-pneumatic simulator
 
-[![Deploy website](https://github.com/mohamed-belal-10/control-lab-simulator/actions/workflows/deploy.yml/badge.svg)](https://github.com/mohamed-belal-10/control-lab-simulator/actions/workflows/deploy.yml)
-[![Tests](https://github.com/mohamed-belal-10/control-lab-simulator/actions/workflows/tests.yml/badge.svg)](https://github.com/mohamed-belal-10/control-lab-simulator/actions/workflows/tests.yml)
+[![Deploy website](https://github.com/YOUR-USERNAME/control-lab-simulator/actions/workflows/deploy.yml/badge.svg)](https://github.com/YOUR-USERNAME/control-lab-simulator/actions/workflows/deploy.yml)
+[![Tests](https://github.com/YOUR-USERNAME/control-lab-simulator/actions/workflows/tests.yml/badge.svg)](https://github.com/YOUR-USERNAME/control-lab-simulator/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Build, wire, run and troubleshoot relay and electro-pneumatic control circuits with the real components you will use on the bench, right in your browser.**
@@ -10,7 +10,7 @@ Most circuit simulators draw symbols. Control Lab draws the actual hardware: a 2
 
 <p align="center"><img src="docs/images/hero.png" alt="Automatic A+ A− cycle with relays, a double-solenoid valve and reed switches" width="100%"></p>
 
-> 🌐 **Try it live:** **<https://mohamed-belal-10.github.io/control-lab-simulator/>**
+> 🌐 **Live site:** `https://YOUR-USERNAME.github.io/control-lab-simulator/` (after you publish, see [Publishing](#publishing-on-github-pages))
 > 🎬 **2½-minute tutorial:** [docs/media/tutorial.mp4](docs/media/tutorial.mp4)
 
 ---
@@ -44,6 +44,7 @@ Most circuit simulators draw symbols. Control Lab draws the actual hardware: a 2
 | 🩺 **Circuit Check** | Runs on every **Run**. It traces every coil, lamp and sensor back to the supply, reports wrong or missing connections with an exact fix, highlights them on the board, and lists what each load is waiting for. |
 | 🤖 **Trace with AI** | When the simulator is opened from its claude.ai link, Claude can trace the whole circuit and tell you which wire to move. |
 | 🔧 **Multimeter** | V DC / V AC between any two terminals, plus Ω and continuity on the de-energised circuit (e.g. MY4 coil ≈ 650 Ω). |
+| 🗂️ **Select, group, align** | Sweep over parts with the left button to select them live, group them (<kbd>Ctrl</kbd>+<kbd>G</kbd>) so they move and rotate as one, then align or distribute parts and groups with one click. |
 | 📐 **Wiring ducts** | Slotted ducts with length, width and depth set in **cm**. Wires are laid through the duct network automatically, each in its own lane, with the cover on or off. |
 | ⚠️ **Realistic faults** | Short circuits, overloads, wrong coil voltages, burnt lamps, welded contacts, reversed sensor polarity, too much current through reed switches and sensor outputs, air leaks, missing pilot pressure. |
 | 💾 **Circuit files** | Save as a `.ccs` file, or as a stand-alone `.html` that opens the simulator with your circuit on double-click. There's also a parts and wire shopping list. |
@@ -51,7 +52,7 @@ Most circuit simulators draw symbols. Control Lab draws the actual hardware: a 2
 
 ## Quick start
 
-- **Online:** open **<https://mohamed-belal-10.github.io/control-lab-simulator/>**.
+- **Online:** open the published site (see [Publishing](#publishing-on-github-pages)).
 - **Offline:** download `index.html` from the site (or build it with `python build.py`) and double-click it.
 - **First steps:** open **Examples**, load *“4 · Automatic A+ A− with reed switches”*, press **▶ Run**, then press the green **START** button on the board.
 
@@ -61,7 +62,7 @@ The simulator always opens on a clear board. **Restore my last work** in the rig
 
 | Step | What you do |
 |---|---|
-| **1 · Place** | Drag parts from the library on the left, or type in the search box. |
+| **1 · Place** | Drag parts from the library on the left, or type in the search box. Sweep with the left button to select several, <kbd>Ctrl</kbd>+<kbd>G</kbd> to group them, and use **Align** in the right panel to line them up. Right-drag pans the board. |
 | **2 · Wire** | Click a screw terminal, then another one. Click empty space on the way to add bends. Tubes start from the blue push-in ports. |
 | **3 · Set up** | Click a part to change its settings (coil voltage, contacts, colour, bore and stroke, sensor type…). The panel also shows live readings and real wiring notes. |
 | **4 · Run** | **▶ Run** or <kbd>Space</kbd>. Press buttons, put objects in front of sensors, and operate the valves' manual overrides. |
@@ -138,6 +139,7 @@ control-lab-simulator/
 │       ├── 30-elec.js           electrical solver (modified nodal analysis)
 │       ├── 31-pneu.js           pneumatic solver
 │       ├── 40-circuit.js        circuit model, save/load, undo, reed mounting
+│       ├── 42-arrange.js        groups, align, distribute, group rotation
 │       ├── 45-ducts.js          wire routing through ducts
 │       ├── 50-sim.js            simulation loop + installation checks
 │       ├── 55-doctor.js         Circuit Check (tracing, fault finding, AI prompt)
@@ -168,7 +170,7 @@ Details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 python build.py                              # → dist/index.html  (Python 3.8+, nothing to install)
 pip install -r tests/requirements.txt        # optional: browser tests
 python -m playwright install chromium
-python tests/test_simulator.py               # 22 tests: physics, circuit check, files, ducts
+python tests/test_simulator.py               # 17 tests: physics, circuit check, files, ducts
 python tools/generate_docs_assets.py         # refresh docs/PARTS.md, screenshots, examples/*.ccs
 ```
 
@@ -176,7 +178,13 @@ To work on the code, open `dist/index.html` in a browser after each `python buil
 
 ## Publishing on GitHub Pages
 
-The site is deployed by GitHub Actions to **<https://mohamed-belal-10.github.io/control-lab-simulator/>**. Every push to `main` rebuilds and redeploys the site automatically. Step-by-step instructions, including troubleshooting, are in **[docs/PUBLISHING.md](docs/PUBLISHING.md)**.
+1. Create an empty repository on GitHub named `control-lab-simulator`.
+2. Push this folder to it (GitHub Desktop: *Add local repository → Publish*, or the commands in [docs/PUBLISHING.md](docs/PUBLISHING.md)).
+3. On GitHub, go to **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+4. Wait about a minute for the **Deploy website** workflow to finish. The site is then live at `https://YOUR-USERNAME.github.io/control-lab-simulator/`.
+5. Replace `YOUR-USERNAME` in this README with your GitHub user name.
+
+Every push to `main` rebuilds and redeploys the site automatically. Step-by-step instructions, including troubleshooting, are in **[docs/PUBLISHING.md](docs/PUBLISHING.md)**.
 
 ## Contributing
 

@@ -65,6 +65,25 @@ TESTS = {
         const d1 = CCS.newPart('duct', 190, 178, { length: 36, width: 2 }), d2 = CCS.newPart('duct', 190, 520, { length: 36, width: 2 }), d3 = CCS.newPart('duct', 0, 0, { length: 20, width: 2 });
         d3.rot = 90; [d1, d2, d3].forEach(d => C.add(d)); const s = CCS.size(d3); d3.x = 200 - s.w / 2; d3.y = 398 - s.h / 2;
         const n = CCS.ducts.routeWires(true); return n === C.wires.filter(w => w.kind === 'wire').length || ('routed ' + n); })()""",
+    'groups: select together, survive save/load, duplicate into a new group': """(() => { T.load(1); const A = CCS.arrange, ids = ['S0', 'S1', 'H1'];
+        const g = A.group(ids); if (!g || A.expand(['S1']).length !== 3) return 'expand failed';
+        const json = JSON.stringify(CCS.circuit.toJSON()); CCS.ui.loadJSON(JSON.parse(json)); if (A.expand(['H1']).sort().join() !== ids.sort().join()) return 'group lost on load';
+        CCS.ui.select(A.expand(['S0'])); CCS.ui.cmds.duplicate(); const sel = [...CCS.ui.sel.parts].map(T.P);
+        if (sel.length !== 3 || !sel[0].group || sel[0].group === g || !sel.every(c => c.group === sel[0].group)) return 'duplicate not regrouped';
+        A.ungroup(['S0']); return (A.expand(['S1']).length === 2 && !T.P('S0').group) || 'ungroup member failed'; })()""",
+    'align left / centre and distribute with equal gaps': """(() => { const C = CCS.circuit, A = CCS.arrange; C.clear();
+        const p = [[0, 0], [130, 200], [410, 80], [700, 300]].map(([x, y]) => C.add(CCS.newPart('lamp', x, y)));
+        const ids = p.map(c => c.id); A.align(ids, 'left'); const xs = p.map(c => Math.round(C.bbox(c).x)); if (new Set(xs).size !== 1) return 'left: ' + xs;
+        A.align(ids, 'vcenter'); const cy = p.map(c => { const b = C.bbox(c); return Math.round((b.y + b.y2) / 2); }); if (new Set(cy).size !== 1) return 'vcenter: ' + cy;
+        p.forEach((c, i) => (c.x = [0, 90, 400, 900][i])); A.distribute(ids, 'h');
+        const bb = p.map(c => C.bbox(c)).sort((a, b) => a.x - b.x), gaps = bb.slice(1).map((b, i) => Math.round(b.x - bb[i].x2));
+        return new Set(gaps).size === 1 || 'gaps ' + gaps; })()""",
+    'a group aligns as one unit and rotates about its centre': """(() => { const C = CCS.circuit, A = CCS.arrange; C.clear();
+        const a = C.add(CCS.newPart('lamp', 0, 0)), b = C.add(CCS.newPart('lamp', 0, 150)), c = C.add(CCS.newPart('lamp', 400, 60));
+        A.group([a.id, b.id]); const off = b.y - a.y; A.align([a.id, b.id, c.id], 'top');
+        if (b.y - a.y !== off) return 'group was split'; if (Math.round(C.bbox(c).y) !== Math.round(C.bbox(a).y)) return 'not aligned';
+        const B0 = A.box([a, b]); A.rotate([a.id, b.id]); const B1 = A.box([a, b]);
+        if (Math.abs(B0.cx - B1.cx) > 1 || Math.abs(B0.cy - B1.cy) > 1) return 'centre moved'; return (a.rot === 90 && b.rot === 90) || 'not rotated'; })()""",
 }
 
 
@@ -87,6 +106,24 @@ async def main() -> int:
             ok = res is True
             failures += 0 if ok else 1
             print(f"{'PASS' if ok else 'FAIL'}  {name}" + ('' if ok else f'  ->  {res}'))
+        # real mouse: left-drag on empty board selects live, right-drag pans
+        await page.evaluate("() => { T.load(1); CCS.ui.cmds.selectAll(); CCS.ui.select([]); CCS.view.fit(); }")
+        await page.wait_for_timeout(100)
+        box = await page.evaluate("""() => { const r = document.getElementById('canvas').getBoundingClientRect();
+            const bs = CCS.circuit.parts.map(c => CCS.circuit.bbox(c)); const x = Math.min(...bs.map(b => b.x)), y = Math.min(...bs.map(b => b.y));
+            const m = document.getElementById('world').getScreenCTM(); return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, x: Math.max(r.left + 6, m.a * (x - 30) + m.e), y: Math.max(r.top + 6, m.d * (y - 30) + m.f) }; }""")
+        await page.mouse.move(box['x'], box['y']); await page.mouse.down()
+        await page.mouse.move(box['cx'], box['cy'], steps=8)
+        live = await page.evaluate('() => CCS.ui.sel.parts.size')
+        await page.mouse.up()
+        after = await page.evaluate('() => CCS.ui.sel.parts.size')
+        v0 = await page.evaluate('() => CCS.view.x')
+        await page.mouse.move(box['cx'], box['cy']); await page.mouse.down(button='right')
+        await page.mouse.move(box['cx'] + 80, box['cy'] + 20, steps=4); await page.mouse.up(button='right')
+        v1 = await page.evaluate('() => [CCS.view.x, CCS.ui.sel.parts.size]')
+        ok = live > 0 and after == live and abs(v1[0] - v0 - 80) < 2 and v1[1] == after
+        failures += 0 if ok else 1
+        print(f"{'PASS' if ok else 'FAIL'}  mouse: sweep-select is live, right-drag pans" + ('' if ok else f'  ->  live={live} after={after} pan={v1[0]-v0} sel={v1[1]}'))
         # the example circuit files in examples/ must open
         for f in sorted((ROOT / 'examples').glob('*.ccs')):
             n = await page.evaluate("t => { CCS.ui.loadJSON(CCS.ui.parseCircuitFile(t)); return CCS.circuit.parts.length; }", f.read_text(encoding='utf-8'))

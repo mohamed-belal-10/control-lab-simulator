@@ -10,6 +10,7 @@ src/js/20…25-parts-*.js   part definitions
 src/js/30-elec.js         electrical solver
 src/js/31-pneu.js         pneumatic solver
 src/js/40-circuit.js      circuit model, attachments, serialisation, undo
+src/js/42-arrange.js      groups, align / distribute, group rotation (selection "units")
 src/js/45-ducts.js        duct routing
 src/js/50-sim.js          simulation loop, installation checks
 src/js/55-doctor.js       Circuit Check

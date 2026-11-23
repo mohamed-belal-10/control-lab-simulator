@@ -3,7 +3,7 @@
  * ========================================================================= */
 CCS.ui = (() => {
   const $ = id => document.getElementById(id);
-  const U = CCS.util, circ = CCS.circuit;
+  const U = CCS.util, circ = CCS.circuit, AR = CCS.arrange;
   const ui = {
     tool: 'select', sel: { parts: new Set(), wire: null }, drawing: null, box: null,
     meter: { mode: 'V', red: null, black: null, rCache: null }, wireColor: 'auto', propsSig: 0,
@@ -129,19 +129,27 @@ CCS.ui = (() => {
     }
     if (partEl && circ.byId(partEl.dataset.cid)) {
       const id = partEl.dataset.cid;
-      if (e.shiftKey) { ui.sel.parts.has(id) ? ui.sel.parts.delete(id) : ui.sel.parts.add(id); ui.sel.wire = null; ui.propsSig++; }
-      else if (!ui.sel.parts.has(id)) select([id]);
+      const unit = e.altKey ? [id] : AR.expand([id]);
+      if (e.shiftKey) { const on = ui.sel.parts.has(id); unit.forEach(u => (on ? ui.sel.parts.delete(u) : ui.sel.parts.add(u))); ui.sel.wire = null; ui.propsSig++; }
+      else if (!ui.sel.parts.has(id) || e.altKey) select(unit);
       mode = 'drag';
-      drag = { X, Y, moved: false, start: [...ui.sel.parts].map(pid => circ.byId(pid)).filter(Boolean).map(c => ({ c, x: c.x, y: c.y })) };
+      // reeds clamped to a cylinder that is also moving just follow it
+      const moving = [...ui.sel.parts].map(pid => circ.byId(pid)).filter(Boolean).filter(c => !(AR.follows(c) && ui.sel.parts.has(c.props.attach)));
+      drag = { X, Y, moved: false, start: moving.map(c => ({ c, x: c.x, y: c.y })) };
       // wires fully inside the selection move their bends too
       drag.wires = circ.wires.filter(w => ui.sel.parts.has(w.a.c) && ui.sel.parts.has(w.b.c)).map(w => ({ w, pts: (w.pts || []).map(p => [...p]) }));
       return;
     }
     const wh = tgt.closest('[data-wid]');
     if (wh) { clearSel(); ui.sel.wire = wh.dataset.wid; return; }
-    if (e.shiftKey) { mode = 'box'; ui.box = { x0: X, y0: Y, x1: X, y1: Y }; return; }
-    clearSel(); ui.hl = null;
-    mode = 'pan'; drag = { sx: e.clientX, sy: e.clientY, vx: CCS.view.x, vy: CCS.view.y }; svg.classList.add('panning');
+    // empty board: left-drag sweeps a selection box (Shift/Ctrl adds to the selection)
+    mode = 'box'; ui.box = { x0: X, y0: Y, x1: X, y1: Y, sx: e.clientX, sy: e.clientY, base: (e.shiftKey || e.ctrlKey || e.metaKey) ? new Set(ui.sel.parts) : new Set() };
+    if (!ui.box.base.size) { clearSel(); ui.hl = null; }
+  }
+  /** parts touched by the selection box, expanded to whole groups */
+  function boxHits(b) {
+    const x0 = Math.min(b.x0, b.x1), x1 = Math.max(b.x0, b.x1), y0 = Math.min(b.y0, b.y1), y1 = Math.max(b.y0, b.y1);
+    return AR.expand(circ.parts.filter(c => { const bb = circ.bbox(c); return bb.x2 >= x0 && bb.x <= x1 && bb.y2 >= y0 && bb.y <= y1; }).map(c => c.id));
   }
   function onMove(e) {
     const [X, Y] = CCS.view.toWorld(e.clientX, e.clientY);
@@ -159,11 +167,17 @@ CCS.ui = (() => {
       const ddx = snap(dx), ddy = snap(dy);
       drag.wires.forEach(o => (o.w.pts = o.pts.map(p => [p[0] + ddx, p[1] + ddy])));
     } else if (mode === 'wpt') { drag.w.pts[drag.i] = [snap(X), snap(Y)]; drag.w.routed = false; }
-    else if (mode === 'box') { ui.box.x1 = X; ui.box.y1 = Y; }
+    else if (mode === 'box') {
+      ui.box.x1 = X; ui.box.y1 = Y;
+      if (Math.hypot(e.clientX - ui.box.sx, e.clientY - ui.box.sy) > 4) {
+        const sig = [...new Set([...ui.box.base, ...boxHits(ui.box)])].sort().join();
+        if (sig !== ui.box.sig) { ui.box.sig = sig; ui.sel.parts.clear(); if (sig) sig.split(',').forEach(id => ui.sel.parts.add(id)); ui.sel.wire = null; ui.propsSig++; }
+      }
+    }
   }
   function onUp(e) {
     try { upInner(e); } catch (err) { console.error(err); }
-    mode = null; drag = null; $('canvas').classList.remove('panning');
+    mode = null; drag = null; ui.box = null; $('canvas').classList.remove('panning');
   }
   function upInner(e) {
     if (mode && mode !== 'wiredrag' && mode !== 'box' && !drag) return;
@@ -172,9 +186,7 @@ CCS.ui = (() => {
       if (drag.moved) { drag.start.forEach(s => { if (s.c.type === 'reed') CCS.attach.tryAttach(s.c); }); commit(); }
     } else if (mode === 'wpt') commit();
     else if (mode === 'box') {
-      const b = ui.box, x0 = Math.min(b.x0, b.x1), x1 = Math.max(b.x0, b.x1), y0 = Math.min(b.y0, b.y1), y1 = Math.max(b.y0, b.y1);
-      const ids = circ.parts.filter(c => { const bb = circ.bbox(c); return bb.x >= x0 && bb.x2 <= x1 && bb.y >= y0 && bb.y2 <= y1; }).map(c => c.id);
-      select(ids, true); ui.box = null;
+      ui.box = null;
     }
     if (ui.drawing && ui.drawing.moved && mode === 'wiredrag') {
       const t = termAt(e.clientX, e.clientY);
@@ -228,13 +240,25 @@ CCS.ui = (() => {
     help: () => helpDialog(),
     undo: () => { CCS.history.undo(); clearSel(); CCS.sim.idleCheck(); if (ui.doc.active) { ui.doc.findings = CCS.doctor.run(); updateChip(); } },
     redo: () => { CCS.history.redo(); clearSel(); CCS.sim.idleCheck(); if (ui.doc.active) { ui.doc.findings = CCS.doctor.run(); updateChip(); } },
-    rotate: () => { ui.sel.parts.forEach(id => { const c = circ.byId(id); if (c.type === 'reed' && c.props.attach) return; c.rot = ((c.rot || 0) + 90) % 360; }); commit(); },
+    rotate: () => { const ids = [...ui.sel.parts].filter(id => circ.byId(id)); if (!ids.length) return; AR.rotate(ids); commit(); },
+    group: () => {
+      const ids = [...ui.sel.parts]; if (AR.expand(ids).length < 2) return hint('Select two or more parts to group them');
+      AR.group(ids); select(AR.expand(ids)); commit(); hint('Grouped — the parts now select and move together (Alt+click picks one member)');
+    },
+    ungroup: () => { const n = AR.ungroup([...ui.sel.parts]); if (!n) return hint('Nothing grouped in the selection'); ui.propsSig++; commit(); hint('Ungrouped'); },
+    align: how => { if (AR.align([...ui.sel.parts], how) < 2) return hint('Select two or more parts or groups to align'); commit(); },
+    distribute: axis => { if (AR.distribute([...ui.sel.parts], axis) < 3) return hint('Select three or more parts or groups to distribute'); commit(); },
+    selectAll: () => { select(circ.parts.map(c => c.id)); },
+    nudge: (dx, dy) => { const U2 = AR.units([...ui.sel.parts]); if (!U2.length) return; U2.forEach(u => AR.move(u, dx, dy)); circ.touch(); commit(); },
     duplicate: () => {
       const ids = [...ui.sel.parts]; if (!ids.length) return;
       const map = new Map(), news = [];
       ids.forEach(id => { const o = circ.byId(id); const c = CCS.newPart(o.type, o.x + 40, o.y + 40, U.deep(o.props)); c.rot = o.rot; if (c.props.tag) c.props.tag = circ.nextTag(String(c.props.tag).replace(/\d+$/, '')); map.set(id, c.id); circ.add(c); news.push(c.id); });
       circ.wires.filter(w => map.has(w.a.c) && map.has(w.b.c)).forEach(w => circ.addWire({ ...U.deep(w), id: null, a: { c: map.get(w.a.c), t: w.a.t }, b: { c: map.get(w.b.c), t: w.b.t }, pts: (w.pts || []).map(p => [p[0] + 40, p[1] + 40]) }));
       circ.parts.forEach(p => { if (news.includes(p.id) && p.props.attach && map.has(p.props.attach)) p.props.attach = map.get(p.props.attach); });
+      // copies of a group form a new group of their own
+      const gmap = new Map();
+      ids.forEach(id => { const o = circ.byId(id); if (o.group) { if (!gmap.has(o.group)) gmap.set(o.group, U.uid('g')); circ.byId(map.get(id)).group = gmap.get(o.group); } });
       select(news); commit();
     },
     delete: () => {
@@ -331,7 +355,7 @@ CCS.ui = (() => {
         h += `<div class="prow"><label for="${id}">${U.esc(p.label)}</label>${inp}</div>`;
       });
       h += `<div class="sec"><h4>Live readings</h4><div id="propsLive"></div></div>`;
-      h += `<div class="btnrow"><button data-pc="rotate">⟳ Rotate</button><button data-pc="duplicate">⧉ Duplicate</button><button data-pc="delete">🗑 Delete</button><button data-pc="repair">🔧 Repair</button>${c.type === 'reed' && c.props.attach ? '<button data-pc="detach">Detach</button>' : ''}${c.type === 'duct' ? '<button data-pc="routeAll">🧵 Route all wires through ducts</button><button data-pc="unroute">Free all wires</button>' : ''}</div>`;
+      h += `<div class="btnrow"><button data-pc="rotate">⟳ Rotate</button><button data-pc="duplicate">⧉ Duplicate</button><button data-pc="delete">🗑 Delete</button><button data-pc="repair">🔧 Repair</button>${c.type === 'reed' && c.props.attach ? '<button data-pc="detach">Detach</button>' : ''}${c.group ? '<button data-pc="ungroup" title="Remove this part from its group">⬚ Leave group</button>' : ''}${c.type === 'duct' ? '<button data-pc="routeAll">🧵 Route all wires through ducts</button><button data-pc="unroute">Free all wires</button>' : ''}</div>`;
       h += `<div class="sec"><h4>Real part & wiring notes</h4><div class="info-txt">${U.esc(T.info || '')}</div></div>`;
       h += `<div class="sec"><h4>Terminals</h4><div class="tlist">${CCS.termsOf(c).map(t => `<b>${U.esc(t.id)}</b><span>${U.esc(t.d || '')}${(c.wired || {})[t.id] ? ' · ' + c.wired[t.id] + ' conn.' : ''}</span>`).join('')}</div></div>`;
       P.innerHTML = h;
@@ -358,8 +382,31 @@ CCS.ui = (() => {
       return;
     }
     if (ui.sel.parts.size > 1) {
-      P.innerHTML = `<h3>${ui.sel.parts.size} parts selected</h3><div class="btnrow"><button data-pc="rotate">⟳ Rotate</button><button data-pc="duplicate">⧉ Duplicate</button><button data-pc="delete">🗑 Delete</button></div><div class="sec"><h4>Faults</h4><div id="propsLive"></div></div>`;
+      const ids = [...ui.sel.parts], nU = AR.units(ids).length, nG = AR.groupsIn(ids).size;
+      const allOneGroup = nG === 1 && ids.every(id => (circ.byId(id) || {}).group);
+      const ico = d => `<svg viewBox="0 0 20 20" width="18" height="18">${d}</svg>`;
+      const R = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" fill="currentColor" opacity=".75"/>`;
+      const L = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="currentColor" stroke-width="1.6"/>`;
+      const AL = [
+        ['left', 'Align left edges', L(3, 2, 3, 18) + R(5, 4, 11, 4) + R(5, 12, 7, 4)],
+        ['hcenter', 'Align centres (vertical line)', L(10, 2, 10, 18) + R(4, 4, 12, 4) + R(6, 12, 8, 4)],
+        ['right', 'Align right edges', L(17, 2, 17, 18) + R(4, 4, 11, 4) + R(8, 12, 7, 4)],
+        ['top', 'Align top edges', L(2, 3, 18, 3) + R(4, 5, 4, 11) + R(12, 5, 4, 7)],
+        ['vcenter', 'Align middles (horizontal line)', L(2, 10, 18, 10) + R(4, 4, 4, 12) + R(12, 6, 4, 8)],
+        ['bottom', 'Align bottom edges', L(2, 17, 18, 17) + R(4, 4, 4, 11) + R(12, 8, 4, 7)],
+      ].map(([k, t, d]) => `<button class="ibtn" data-al="${k}" title="${t}"${nU < 2 ? ' disabled' : ''}>${ico(d)}</button>`).join('');
+      const DI = [
+        ['h', 'Distribute horizontally (equal gaps)', R(2, 6, 3, 8) + R(8.5, 6, 3, 8) + R(15, 6, 3, 8)],
+        ['v', 'Distribute vertically (equal gaps)', R(6, 2, 8, 3) + R(6, 8.5, 8, 3) + R(6, 15, 8, 3)],
+      ].map(([k, t, d]) => `<button class="ibtn" data-di="${k}" title="${t}"${nU < 3 ? ' disabled' : ''}>${ico(d)}</button>`).join('');
+      P.innerHTML = `<h3>${allOneGroup ? 'Group' : ids.length + ' parts selected'}</h3>` +
+        `<div class="sub">${allOneGroup ? ids.length + ' parts · moves, rotates and duplicates as one unit · Alt+click to pick one member' : nU + ' unit' + (nU === 1 ? '' : 's') + (nG ? ' · ' + nG + ' group' + (nG > 1 ? 's' : '') : '') + ' — a group counts as one unit'}</div>` +
+        `<div class="btnrow">${allOneGroup ? '' : '<button data-pc="group" title="Ctrl+G">▣ Group</button>'}${nG ? '<button data-pc="ungroup" title="Ctrl+Shift+G">⬚ Ungroup</button>' : ''}<button data-pc="rotate">⟳ Rotate</button><button data-pc="duplicate">⧉ Duplicate</button><button data-pc="delete">🗑 Delete</button></div>` +
+        `<div class="sec"><h4>Align</h4><div class="ibar">${AL}</div><h4 style="margin-top:8px">Distribute</h4><div class="ibar">${DI}</div><div class="sub" style="margin-top:6px">Aligns to the edges of the whole selection. Arrow keys nudge one grid step (Shift = 1 mm).</div></div>` +
+        `<div class="sec"><h4>Faults</h4><div id="propsLive"></div></div>`;
       P.querySelectorAll('[data-pc]').forEach(b => (b.onclick = () => cmds[b.dataset.pc]()));
+      P.querySelectorAll('[data-al]').forEach(b => (b.onclick = () => cmds.align(b.dataset.al)));
+      P.querySelectorAll('[data-di]').forEach(b => (b.onclick = () => cmds.distribute(b.dataset.di)));
       return;
     }
     const nW = circ.wires.filter(w => w.kind === 'wire').length, nT = circ.wires.length - nW;
@@ -567,8 +614,11 @@ If the wiring is correct, say so and tell the student what to press to make it r
 <li><b>Wires:</b> click a screw terminal, then another terminal. Click empty space on the way to add bends. <kbd>Esc</kbd> or right-click cancels. With colour <b>Auto</b>, L/N/PE/+V/−V get standard colours.</li>
 <li><b>Tubes:</b> click a blue push-in port, then another port. One tube per port — branch with a T-fitting or manifold.</li>
 <li><b>Reed switches:</b> drag them onto the barrel of a cylinder at the end position you want — they clamp on and move with the cylinder.</li>
-<li>Select: click; <kbd>Shift</kbd>+click adds; <kbd>Shift</kbd>+drag on empty space box-selects. <kbd>R</kbd> rotate, <kbd>Del</kbd> delete, <kbd>Ctrl+D</kbd> duplicate, <kbd>Ctrl+Z/Y</kbd> undo/redo.</li>
-<li>Pan: drag empty space (or middle mouse). Zoom: mouse wheel.</li></ul>
+<li>Select: click a part; <kbd>Shift</kbd>+click adds. Hold the left button on empty board and sweep — every part the box touches is selected as you go (<kbd>Shift</kbd> keeps the old selection). <kbd>Ctrl+A</kbd> selects all.</li>
+<li>Groups: <kbd>Ctrl+G</kbd> groups the selection, <kbd>Ctrl+Shift+G</kbd> ungroups. A group selects, moves, rotates and duplicates as one; <kbd>Alt</kbd>+click picks a single member.</li>
+<li>Align &amp; distribute: select several parts/groups and use the buttons in the right panel. Arrow keys nudge (<kbd>Shift</kbd> = 1 mm).</li>
+<li><kbd>R</kbd> rotate, <kbd>Del</kbd> delete, <kbd>Ctrl+D</kbd> duplicate, <kbd>Ctrl+Z/Y</kbd> undo/redo.</li>
+<li>Pan: hold the right (or middle) button and drag. Zoom: mouse wheel. <kbd>F</kbd> fits the board.</li></ul>
 <h4>Simulate</h4><ul><li><kbd>Space</kbd> or ▶ Run energises the circuit. Push buttons work while held; latching parts toggle on click. Click the dashed zone of a sensor to put an object in front of it.</li>
 <li>Glowing wires carry current; white dashes show its direction (AC oscillates). Pressurised tubes are bright blue.</li>
 <li>■ Reset returns every part to its initial state (cylinders retracted, breakers on, damaged parts replaced).</li></ul>
@@ -608,7 +658,7 @@ If the wiring is correct, say so and tell the student what to press to make it r
     svg.addEventListener('pointermove', onMove);
     svg.addEventListener('pointerup', onUp);
     svg.addEventListener('pointercancel', onUp);
-    svg.addEventListener('lostpointercapture', () => { if (mode === 'act' && drag) { try { CCS.types[drag.c.type].act(drag.c, drag.name, 'up'); } catch (e) { } } if (mode !== 'wiredrag') { mode = null; drag = null; } });
+    svg.addEventListener('lostpointercapture', () => { if (mode === 'act' && drag) { try { CCS.types[drag.c.type].act(drag.c, drag.name, 'up'); } catch (e) { } } if (mode !== 'wiredrag') { mode = null; drag = null; ui.box = null; } });
     svg.addEventListener('dblclick', onDbl);
     svg.addEventListener('contextmenu', e => { e.preventDefault(); if (ui.drawing) { ui.drawing = null; svg.classList.remove('wiring'); } });
     svg.addEventListener('wheel', e => { e.preventDefault(); CCS.view.zoomAt(e.deltaY < 0 ? 1.12 : 1 / 1.12, e.clientX, e.clientY); }, { passive: false });
@@ -623,6 +673,12 @@ If the wiring is correct, say so and tell the student what to press to make it r
       else if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); e.shiftKey ? cmds.redo() : cmds.undo(); }
       else if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); cmds.redo(); }
       else if ((e.ctrlKey || e.metaKey) && k === 'd') { e.preventDefault(); cmds.duplicate(); }
+      else if ((e.ctrlKey || e.metaKey) && k === 'g') { e.preventDefault(); e.shiftKey ? cmds.ungroup() : cmds.group(); }
+      else if ((e.ctrlKey || e.metaKey) && k === 'a') { e.preventDefault(); cmds.selectAll(); }
+      else if (k.startsWith('arrow') && ui.sel.parts.size) {
+        e.preventDefault(); const st = e.shiftKey ? 2 : 10;
+        cmds.nudge(k === 'arrowleft' ? -st : k === 'arrowright' ? st : 0, k === 'arrowup' ? -st : k === 'arrowdown' ? st : 0);
+      }
       else if ((e.ctrlKey || e.metaKey) && k === 's') { e.preventDefault(); exportDialog(); }
       else if ((e.ctrlKey || e.metaKey) && k === 'o') { e.preventDefault(); openDialog(); }
       else if (k === 'r' && !e.ctrlKey) cmds.rotate();
