@@ -5,7 +5,7 @@ CCS.ui = (() => {
   const $ = id => document.getElementById(id);
   const U = CCS.util, circ = CCS.circuit, AR = CCS.arrange;
   const ui = {
-    tool: 'select', sel: { parts: new Set(), wire: null }, drawing: null, box: null,
+    tool: 'select', sel: { parts: new Set(), wire: null }, drawing: null, box: null, selRect: null,
     meter: { mode: 'V', red: null, black: null, rCache: null }, wireColor: 'auto', propsSig: 0,
     hl: null, doc: { findings: [], active: false, ai: '', goal: '', busy: false },
   };
@@ -132,21 +132,47 @@ CCS.ui = (() => {
       const unit = e.altKey ? [id] : AR.expand([id]);
       if (e.shiftKey) { const on = ui.sel.parts.has(id); unit.forEach(u => (on ? ui.sel.parts.delete(u) : ui.sel.parts.add(u))); ui.sel.wire = null; ui.propsSig++; }
       else if (!ui.sel.parts.has(id) || e.altKey) select(unit);
-      mode = 'drag';
-      // reeds clamped to a cylinder that is also moving just follow it
-      const moving = [...ui.sel.parts].map(pid => circ.byId(pid)).filter(Boolean).filter(c => !(AR.follows(c) && ui.sel.parts.has(c.props.attach)));
-      drag = { X, Y, moved: false, start: moving.map(c => ({ c, x: c.x, y: c.y })) };
-      // wires fully inside the selection move their bends too
-      drag.wires = circ.wires.filter(w => ui.sel.parts.has(w.a.c) && ui.sel.parts.has(w.b.c)).map(w => ({ w, pts: (w.pts || []).map(p => [...p]) }));
+      startMove(X, Y, id);
       return;
     }
+    // empty space inside the selection frame: grab the whole selection
+    const fr = selFrame();
+    if (fr && !e.shiftKey && X >= fr.x && X <= fr.x2 && Y >= fr.y && Y <= fr.y2) { startMove(X, Y, null); drag.frameGrab = true; return; }
     const wh = tgt.closest('[data-wid]');
     if (wh) { clearSel(); ui.sel.wire = wh.dataset.wid; return; }
-    // empty board: left-drag sweeps a selection box (Shift/Ctrl adds to the selection)
-    mode = 'box'; ui.box = { x0: X, y0: Y, x1: X, y1: Y, sx: e.clientX, sy: e.clientY, base: (e.shiftKey || e.ctrlKey || e.metaKey) ? new Set(ui.sel.parts) : new Set() };
-    if (!ui.box.base.size) { clearSel(); ui.hl = null; }
+    // empty board: drag a selection rectangle; parts it touches are selected live (Shift adds)
+    mode = 'box'; ui.box = { x0: X, y0: Y, x1: X, y1: Y, sx: e.clientX, sy: e.clientY, moved: false, base: e.shiftKey ? new Set(ui.sel.parts) : new Set() };
+    if (!e.shiftKey) { clearSel(); ui.hl = null; }
   }
-  /** parts touched by the selection box, expanded to whole groups */
+  /** start moving the whole selection; the grabbed part (or the first one) snaps to the grid, the rest keep their spacing */
+  function startMove(X, Y, grabId) {
+    mode = 'drag';
+    // reeds clamped to a cylinder that is also moving just follow it
+    const moving = [...ui.sel.parts].map(pid => circ.byId(pid)).filter(Boolean).filter(c => !(AR.follows(c) && ui.sel.parts.has(c.props.attach)));
+    drag = { X, Y, moved: false, start: moving.map(c => ({ c, x: c.x, y: c.y })) };
+    drag.anchor = drag.start.find(s => s.c.id === grabId) || drag.start[0];
+    const fr = selFrame(); drag.fr0 = fr ? { ...fr } : null;
+    // wires fully inside the selection move their bends too
+    drag.wires = circ.wires.filter(w => ui.sel.parts.has(w.a.c) && ui.sel.parts.has(w.b.c)).map(w => ({ w, pts: (w.pts || []).map(p => [...p]) }));
+  }
+  const selSig = () => [...ui.sel.parts].sort().join();
+  /** the selection frame: fixed in size once set (the released rectangle, or the selection bounds at that moment),
+   *  it only travels with the parts. Grab anywhere inside it to move everything. */
+  function selFrame() {
+    if (ui.box || ui.sel.parts.size < 2) return null;
+    const sig = selSig();
+    if (ui.selRect && ui.selRect.sig === sig) return ui.selRect;
+    const list = [...ui.sel.parts].map(id => circ.byId(id)).filter(Boolean); if (list.length < 2) return null;
+    const B = AR.box(list), m = 14;
+    return (ui.selRect = { x: B.x - m, y: B.y - m, x2: B.x2 + m, y2: B.y2 + m, sig });
+  }
+  /** after align / distribute / rotate: if a part ended up outside the frame, refit it once */
+  function refitFrame() {
+    const fr = ui.selRect; if (!fr || fr.sig !== selSig()) return;
+    const out = [...ui.sel.parts].map(id => circ.byId(id)).filter(Boolean).some(c => { const b = circ.bbox(c); return b.x < fr.x || b.x2 > fr.x2 || b.y < fr.y || b.y2 > fr.y2; });
+    if (out) ui.selRect = null;
+  }
+  /** parts touched by the rectangle, expanded to whole groups */
   function boxHits(b) {
     const x0 = Math.min(b.x0, b.x1), x1 = Math.max(b.x0, b.x1), y0 = Math.min(b.y0, b.y1), y1 = Math.max(b.y0, b.y1);
     return AR.expand(circ.parts.filter(c => { const bb = circ.bbox(c); return bb.x2 >= x0 && bb.x <= x1 && bb.y2 >= y0 && bb.y <= y1; }).map(c => c.id));
@@ -163,16 +189,24 @@ CCS.ui = (() => {
     else if (mode === 'drag') {
       const dx = X - drag.X, dy = Y - drag.Y;
       if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
-      drag.start.forEach(s => { s.c.x = snap(s.x + dx); s.c.y = snap(s.y + dy); if (s.c.type === 'reed') s.c.props.attach = ''; });
-      const ddx = snap(dx), ddy = snap(dy);
+      // one common offset for everything: the grabbed part lands on the grid (Alt = no snapping), spacing never changes
+      const A = drag.anchor; if (!A) return;
+      const ddx = e.altKey ? dx : snap(A.x + dx) - A.x, ddy = e.altKey ? dy : snap(A.y + dy) - A.y;
+      drag.start.forEach(s => { s.c.x = s.x + ddx; s.c.y = s.y + ddy; if (s.c.type === 'reed') s.c.props.attach = ''; });
       drag.wires.forEach(o => (o.w.pts = o.pts.map(p => [p[0] + ddx, p[1] + ddy])));
+      if (drag.fr0 && ui.selRect) ui.selRect = { ...drag.fr0, x: drag.fr0.x + ddx, x2: drag.fr0.x2 + ddx, y: drag.fr0.y + ddy, y2: drag.fr0.y2 + ddy, sig: selSig() };
     } else if (mode === 'wpt') { drag.w.pts[drag.i] = [snap(X), snap(Y)]; drag.w.routed = false; }
-    else if (mode === 'box') {
-      ui.box.x1 = X; ui.box.y1 = Y;
-      if (Math.hypot(e.clientX - ui.box.sx, e.clientY - ui.box.sy) > 4) {
-        const sig = [...new Set([...ui.box.base, ...boxHits(ui.box)])].sort().join();
-        if (sig !== ui.box.sig) { ui.box.sig = sig; ui.sel.parts.clear(); if (sig) sig.split(',').forEach(id => ui.sel.parts.add(id)); ui.sel.wire = null; ui.propsSig++; }
+    else if (mode === 'box' && ui.box) {
+      const B = ui.box; B.x1 = X; B.y1 = Y;
+      if (!B.moved && Math.hypot(e.clientX - B.sx, e.clientY - B.sy) > 4) B.moved = true;
+      if (B.moved) {
+        const sig = [...new Set([...B.base, ...boxHits(B)])].sort().join();
+        if (sig !== B.sig) { B.sig = sig; ui.sel.parts.clear(); if (sig) sig.split(',').forEach(id => ui.sel.parts.add(id)); ui.sel.wire = null; ui.propsSig++; }
       }
+    } else if (!mode) {
+      // hover: show the move cursor over a multi-part selection
+      const fr = selFrame(), svg = $('canvas'), inFr = !!fr && X >= fr.x && X <= fr.x2 && Y >= fr.y && Y <= fr.y2;
+      if (inFr !== svg.classList.contains('over-sel')) svg.classList.toggle('over-sel', inFr);
     }
   }
   function onUp(e) {
@@ -184,9 +218,15 @@ CCS.ui = (() => {
     if (mode === 'act') { const T = CCS.types[drag.c.type]; T.act(drag.c, drag.name, 'up'); }
     else if (mode === 'drag') {
       if (drag.moved) { drag.start.forEach(s => { if (s.c.type === 'reed') CCS.attach.tryAttach(s.c); }); commit(); }
+      else if (drag.frameGrab) { clearSel(); ui.hl = null; }  // plain click inside the frame deselects
     } else if (mode === 'wpt') commit();
     else if (mode === 'box') {
-      ui.box = null;
+      // on release the rectangle freezes: it becomes the selection frame, a fixed size that encloses everything selected
+      const B = ui.box; ui.box = null;
+      if (B.moved && ui.sel.parts.size > 1) {
+        const list = [...ui.sel.parts].map(id => circ.byId(id)).filter(Boolean), P = AR.box(list), m = 6;
+        ui.selRect = { x: Math.min(B.x0, B.x1, P.x - m), y: Math.min(B.y0, B.y1, P.y - m), x2: Math.max(B.x0, B.x1, P.x2 + m), y2: Math.max(B.y0, B.y1, P.y2 + m), sig: selSig() };
+      }
     }
     if (ui.drawing && ui.drawing.moved && mode === 'wiredrag') {
       const t = termAt(e.clientX, e.clientY);
@@ -240,16 +280,16 @@ CCS.ui = (() => {
     help: () => helpDialog(),
     undo: () => { CCS.history.undo(); clearSel(); CCS.sim.idleCheck(); if (ui.doc.active) { ui.doc.findings = CCS.doctor.run(); updateChip(); } },
     redo: () => { CCS.history.redo(); clearSel(); CCS.sim.idleCheck(); if (ui.doc.active) { ui.doc.findings = CCS.doctor.run(); updateChip(); } },
-    rotate: () => { const ids = [...ui.sel.parts].filter(id => circ.byId(id)); if (!ids.length) return; AR.rotate(ids); commit(); },
+    rotate: () => { const ids = [...ui.sel.parts].filter(id => circ.byId(id)); if (!ids.length) return; AR.rotate(ids); refitFrame(); commit(); },
     group: () => {
       const ids = [...ui.sel.parts]; if (AR.expand(ids).length < 2) return hint('Select two or more parts to group them');
       AR.group(ids); select(AR.expand(ids)); commit(); hint('Grouped — the parts now select and move together (Alt+click picks one member)');
     },
     ungroup: () => { const n = AR.ungroup([...ui.sel.parts]); if (!n) return hint('Nothing grouped in the selection'); ui.propsSig++; commit(); hint('Ungrouped'); },
-    align: how => { if (AR.align([...ui.sel.parts], how) < 2) return hint('Select two or more parts or groups to align'); commit(); },
-    distribute: axis => { if (AR.distribute([...ui.sel.parts], axis) < 3) return hint('Select three or more parts or groups to distribute'); commit(); },
+    align: how => { if (AR.align([...ui.sel.parts], how) < 2) return hint('Select two or more parts or groups to align'); refitFrame(); commit(); },
+    distribute: axis => { if (AR.distribute([...ui.sel.parts], axis) < 3) return hint('Select three or more parts or groups to distribute'); refitFrame(); commit(); },
     selectAll: () => { select(circ.parts.map(c => c.id)); },
-    nudge: (dx, dy) => { const U2 = AR.units([...ui.sel.parts]); if (!U2.length) return; U2.forEach(u => AR.move(u, dx, dy)); circ.touch(); commit(); },
+    nudge: (dx, dy) => { const U2 = AR.units([...ui.sel.parts]); if (!U2.length) return; const fr = selFrame(); U2.forEach(u => AR.move(u, dx, dy)); if (fr) ui.selRect = { ...fr, x: fr.x + dx, x2: fr.x2 + dx, y: fr.y + dy, y2: fr.y2 + dy }; circ.touch(); commit(); },
     duplicate: () => {
       const ids = [...ui.sel.parts]; if (!ids.length) return;
       const map = new Map(), news = [];
@@ -402,7 +442,7 @@ CCS.ui = (() => {
       P.innerHTML = `<h3>${allOneGroup ? 'Group' : ids.length + ' parts selected'}</h3>` +
         `<div class="sub">${allOneGroup ? ids.length + ' parts · moves, rotates and duplicates as one unit · Alt+click to pick one member' : nU + ' unit' + (nU === 1 ? '' : 's') + (nG ? ' · ' + nG + ' group' + (nG > 1 ? 's' : '') : '') + ' — a group counts as one unit'}</div>` +
         `<div class="btnrow">${allOneGroup ? '' : '<button data-pc="group" title="Ctrl+G">▣ Group</button>'}${nG ? '<button data-pc="ungroup" title="Ctrl+Shift+G">⬚ Ungroup</button>' : ''}<button data-pc="rotate">⟳ Rotate</button><button data-pc="duplicate">⧉ Duplicate</button><button data-pc="delete">🗑 Delete</button></div>` +
-        `<div class="sec"><h4>Align</h4><div class="ibar">${AL}</div><h4 style="margin-top:8px">Distribute</h4><div class="ibar">${DI}</div><div class="sub" style="margin-top:6px">Aligns to the edges of the whole selection. Arrow keys nudge one grid step (Shift = 1 mm).</div></div>` +
+        `<div class="sec"><h4>Align</h4><div class="ibar">${AL}</div><h4 style="margin-top:8px">Distribute</h4><div class="ibar">${DI}</div><div class="sub" style="margin-top:6px">Drag inside the frame to move everything (Alt = no snapping). Align uses the edges of the whole selection. Arrow keys nudge one grid step (Shift = 1 mm).</div></div>` +
         `<div class="sec"><h4>Faults</h4><div id="propsLive"></div></div>`;
       P.querySelectorAll('[data-pc]').forEach(b => (b.onclick = () => cmds[b.dataset.pc]()));
       P.querySelectorAll('[data-al]').forEach(b => (b.onclick = () => cmds.align(b.dataset.al)));
@@ -614,7 +654,8 @@ If the wiring is correct, say so and tell the student what to press to make it r
 <li><b>Wires:</b> click a screw terminal, then another terminal. Click empty space on the way to add bends. <kbd>Esc</kbd> or right-click cancels. With colour <b>Auto</b>, L/N/PE/+V/−V get standard colours.</li>
 <li><b>Tubes:</b> click a blue push-in port, then another port. One tube per port — branch with a T-fitting or manifold.</li>
 <li><b>Reed switches:</b> drag them onto the barrel of a cylinder at the end position you want — they clamp on and move with the cylinder.</li>
-<li>Select: click a part; <kbd>Shift</kbd>+click adds. Hold the left button on empty board and sweep — every part the box touches is selected as you go (<kbd>Shift</kbd> keeps the old selection). <kbd>Ctrl+A</kbd> selects all.</li>
+<li>Select: click a part; <kbd>Shift</kbd>+click adds. Hold the left button on empty board and drag a rectangle — every part it touches is selected as you go (<kbd>Shift</kbd> keeps the old selection). <kbd>Ctrl+A</kbd> selects all.</li>
+<li>When you release, the rectangle stays as a fixed-size frame. Grab anywhere inside it (or any selected part) to move everything together — the frame travels with the parts and spacing never changes. <kbd>Alt</kbd> while dragging = no grid snapping. Click inside the frame to deselect.</li>
 <li>Groups: <kbd>Ctrl+G</kbd> groups the selection, <kbd>Ctrl+Shift+G</kbd> ungroups. A group selects, moves, rotates and duplicates as one; <kbd>Alt</kbd>+click picks a single member.</li>
 <li>Align &amp; distribute: select several parts/groups and use the buttons in the right panel. Arrow keys nudge (<kbd>Shift</kbd> = 1 mm).</li>
 <li><kbd>R</kbd> rotate, <kbd>Del</kbd> delete, <kbd>Ctrl+D</kbd> duplicate, <kbd>Ctrl+Z/Y</kbd> undo/redo.</li>
@@ -691,6 +732,6 @@ If the wiring is correct, say so and tell the student what to press to make it r
   function emptyFrame() { const el = $('emptyHint'); if (el) el.classList.toggle('hidden', circ.parts.length > 0); }
   function frame() { pruneSel(); for (const f of [meterFrame, propsFrame, statusFrame, syncRunBtn, emptyFrame]) { try { f(); } catch (e) { console.error(e); } } }
 
-  Object.assign(ui, { init, frame, hint, select, loadJSON, addPart, cmds, setTool, doctorDialog, autoDoctor, standaloneHTML, parseCircuitFile });
+  Object.assign(ui, { init, frame, selFrame, hint, select, loadJSON, addPart, cmds, setTool, doctorDialog, autoDoctor, standaloneHTML, parseCircuitFile });
   return ui;
 })();

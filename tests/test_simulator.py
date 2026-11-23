@@ -106,24 +106,37 @@ async def main() -> int:
             ok = res is True
             failures += 0 if ok else 1
             print(f"{'PASS' if ok else 'FAIL'}  {name}" + ('' if ok else f'  ->  {res}'))
-        # real mouse: left-drag on empty board selects live, right-drag pans
-        await page.evaluate("() => { T.load(1); CCS.ui.cmds.selectAll(); CCS.ui.select([]); CCS.view.fit(); }")
+        # real mouse: rectangle selects live, freezes on release, frame-drag moves all (spacing kept), right-drag pans
+        await page.evaluate("""() => { CCS.ui.loadJSON({ parts: [] }); const C = CCS.circuit;
+            [['L1', 0, 0], ['L2', 200, 13], ['L3', 400, 7]].forEach(([id, x, y]) => { const c = CCS.newPart('lamp', x, y); c.id = id; C.add(c); });
+            CCS.ui.select([]); CCS.view.fit(); }""")
+        await page.wait_for_timeout(150)
+        await page.evaluate("() => CCS.view.fit()")
         await page.wait_for_timeout(100)
-        box = await page.evaluate("""() => { const r = document.getElementById('canvas').getBoundingClientRect();
-            const bs = CCS.circuit.parts.map(c => CCS.circuit.bbox(c)); const x = Math.min(...bs.map(b => b.x)), y = Math.min(...bs.map(b => b.y));
-            const m = document.getElementById('world').getScreenCTM(); return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, x: Math.max(r.left + 6, m.a * (x - 30) + m.e), y: Math.max(r.top + 6, m.d * (y - 30) + m.f) }; }""")
-        await page.mouse.move(box['x'], box['y']); await page.mouse.down()
-        await page.mouse.move(box['cx'], box['cy'], steps=8)
-        live = await page.evaluate('() => CCS.ui.sel.parts.size')
+        scr = "(p) => { const m = document.getElementById('world').getScreenCTM(); return [m.a * p[0] + m.e, m.d * p[1] + m.f]; }"
+        async def S(x, y): return await page.evaluate(scr, [x, y])
+        a, b = await S(-40, -30), await S(300, 150)
+        await page.mouse.move(*a); await page.mouse.down(); await page.mouse.move(*b, steps=10)
+        mid = await page.evaluate("() => [[...CCS.ui.sel.parts].sort().join(), document.querySelectorAll('.marquee').length]")
         await page.mouse.up()
-        after = await page.evaluate('() => CCS.ui.sel.parts.size')
+        fr = await page.evaluate("() => { const f = CCS.ui.selFrame(); return f && [f.x, f.y, f.x2, f.y2].map(Math.round); }")
+        await page.keyboard.down('Shift'); await page.mouse.move(*(await S(380, -30))); await page.mouse.down(); await page.mouse.move(*(await S(480, 60)), steps=6); await page.mouse.up(); await page.keyboard.up('Shift')
+        sel3 = await page.evaluate("() => [...CCS.ui.sel.parts].sort().join()")
+        f0 = await page.evaluate("() => { const f = CCS.ui.selFrame(); return [f.x2 - f.x, f.y2 - f.y, f.x, f.y]; }")
+        before = await page.evaluate("() => ['L1','L2','L3'].map(id => [CCS.circuit.byId(id).x, CCS.circuit.byId(id).y])")
+        g = await S(130, 60)
+        await page.mouse.move(*g); await page.mouse.down(); await page.mouse.move(g[0] + 57, g[1] + 33, steps=6); await page.mouse.up()
+        after = await page.evaluate("() => ['L1','L2','L3'].map(id => [CCS.circuit.byId(id).x, CCS.circuit.byId(id).y])")
+        f1 = await page.evaluate("() => { const f = CCS.ui.selFrame(); return [f.x2 - f.x, f.y2 - f.y, f.x, f.y]; }")
+        d = [(q[0] - p[0], q[1] - p[1]) for p, q in zip(before, after)]
+        moved_together = len(set(d)) == 1 and d[0] != (0, 0)
+        frame_ok = fr == [-40, -30, 300, 150] and abs(f1[0] - f0[0]) < 1e-6 and abs(f1[1] - f0[1]) < 1e-6 and abs(f1[2] - f0[2] - d[0][0]) < 1e-6
         v0 = await page.evaluate('() => CCS.view.x')
-        await page.mouse.move(box['cx'], box['cy']); await page.mouse.down(button='right')
-        await page.mouse.move(box['cx'] + 80, box['cy'] + 20, steps=4); await page.mouse.up(button='right')
+        await page.mouse.move(*g); await page.mouse.down(button='right'); await page.mouse.move(g[0] + 80, g[1] + 20, steps=4); await page.mouse.up(button='right')
         v1 = await page.evaluate('() => [CCS.view.x, CCS.ui.sel.parts.size]')
-        ok = live > 0 and after == live and abs(v1[0] - v0 - 80) < 2 and v1[1] == after
+        ok = mid == ['L1,L2', 1] and sel3 == 'L1,L2,L3' and moved_together and frame_ok and abs(v1[0] - v0 - 80) < 2 and v1[1] == 3
         failures += 0 if ok else 1
-        print(f"{'PASS' if ok else 'FAIL'}  mouse: sweep-select is live, right-drag pans" + ('' if ok else f'  ->  live={live} after={after} pan={v1[0]-v0} sel={v1[1]}'))
+        print(f"{'PASS' if ok else 'FAIL'}  mouse: rectangle selects live, freezes on release, frame-drag moves all, right-drag pans" + ('' if ok else f'  ->  mid={mid} fr={fr} sel3={sel3} d={d} f0={f0} f1={f1} pan={v1[0]-v0} sel={v1[1]}'))
         # the example circuit files in examples/ must open
         for f in sorted((ROOT / 'examples').glob('*.ccs')):
             n = await page.evaluate("t => { CCS.ui.loadJSON(CCS.ui.parseCircuitFile(t)); return CCS.circuit.parts.length; }", f.read_text(encoding='utf-8'))

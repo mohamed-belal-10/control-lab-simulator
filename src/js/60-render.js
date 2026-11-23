@@ -115,6 +115,9 @@ CCS.render = (() => {
     const ui = CCS.ui, sim = CCS.sim;
     let s = '';
     ui.sel.parts.forEach(id => { const c = CCS.circuit.byId(id); if (!c) return; const b = CCS.circuit.bbox(c); s += `<rect class="sel-box" x="${b.x - 5}" y="${b.y - 5}" width="${b.x2 - b.x + 10}" height="${b.y2 - b.y + 10}" rx="6"/>`; });
+    // one frame around a multi-part selection: grab anywhere inside it to move everything
+    const fr = ui.selFrame && ui.selFrame();
+    if (fr) s += `<rect class="sel-frame" x="${fr.x}" y="${fr.y}" width="${fr.x2 - fr.x}" height="${fr.y2 - fr.y}" rx="6"/>`;
     // outline every group that has a selected member
     CCS.arrange.groupsIn([...ui.sel.parts]).forEach(g => {
       const mem = CCS.circuit.parts.filter(p => p.group === g); if (mem.length < 2) return;
@@ -141,7 +144,8 @@ CCS.render = (() => {
       const dr = ui.drawing, pts = [dr.from, ...dr.pts, dr.to];
       s += `<path d="M${pts.map(p => p.join(' ')).join(' L')}" fill="none" stroke="${dr.kind === 'tube' ? '#1e88e5' : (dr.color === 'gy' ? '#43a047' : dr.color)}" stroke-width="${dr.kind === 'tube' ? 6 : 3}" stroke-dasharray="7 5" opacity=".85" pointer-events="none"/>`;
     }
-    if (ui.box) { const b = ui.box; s += `<rect class="marquee" x="${Math.min(b.x0, b.x1)}" y="${Math.min(b.y0, b.y1)}" width="${Math.abs(b.x1 - b.x0)}" height="${Math.abs(b.y1 - b.y0)}"/>`; }
+    // selection rectangle while dragging
+    if (ui.box && ui.box.moved) { const b = ui.box; s += `<rect class="marquee" x="${Math.min(b.x0, b.x1)}" y="${Math.min(b.y0, b.y1)}" width="${Math.abs(b.x1 - b.x0)}" height="${Math.abs(b.y1 - b.y0)}"/>`; }
     // multimeter probes
     if (ui.tool === 'meter') ['red', 'black'].forEach(k => {
       const pk = ui.meter[k]; if (!pk) return;

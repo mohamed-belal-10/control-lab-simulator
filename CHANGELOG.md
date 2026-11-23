@@ -2,7 +2,8 @@
 
 ## 1.1.0 — select, group and align
 
-- **Sweep-select:** hold the left button on empty board and drag; every part the box touches is selected live. <kbd>Shift</kbd> adds to the selection, <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all.
+- **Rectangle select:** left-drag on empty board; every part the rectangle touches is selected live. On release the rectangle becomes a fixed-size selection frame that travels with the parts. <kbd>Shift</kbd> adds to the selection, <kbd>Ctrl</kbd>+<kbd>A</kbd> selects all.
+- **Move together:** grab any selected part or anywhere inside the dotted selection frame. The whole selection moves by one common offset, so spacing and alignment are kept; <kbd>Alt</kbd> drags without grid snapping.
 - **Panning** moved to right-drag / middle-drag (mouse wheel still zooms).
 - **Groups:** <kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd>. A group selects, moves, rotates (about its centre) and duplicates as one unit; <kbd>Alt</kbd>+click picks a single member. Groups are saved in circuit files.
 - **Align** (left, centre, right, top, middle, bottom) and **distribute** (horizontal, vertical) for parts and groups, from the properties panel.

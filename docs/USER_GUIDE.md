@@ -37,8 +37,10 @@ This guide walks through every tool in Control Lab. For a 2½-minute visual tour
 - **Drag** a part from the library onto the board. Parts snap to a 10 px grid.
 - **Search**: type e.g. `relay`, `duct` or `capacitive` to filter the library.
 - **Select**: click a part. <kbd>Shift</kbd>+click adds to the selection. <kbd>Ctrl</kbd>+<kbd>A</kbd> selects everything.
-- **Sweep-select**: hold the left button on empty board and drag. Every part the box touches is selected **live** as you sweep over it. Hold <kbd>Shift</kbd> (or <kbd>Ctrl</kbd>) while starting the sweep to add to the current selection.
-- **Move**: drag any selected part and the whole selection moves with it. Wires that run between moved parts keep their bends. Arrow keys nudge by one grid step (5 mm); <kbd>Shift</kbd>+arrow nudges 1 mm.
+- **Rectangle select**: hold the left button on empty board and drag a rectangle. Every part the rectangle touches is selected while you drag. Hold <kbd>Shift</kbd> when you start to add to the current selection.
+- **Fixed selection frame**: when you release the button, the rectangle stays on the board as a dotted frame with a **fixed size**. It does not resize; it only travels with the parts when you move them.
+- **Move together**: drag any selected part, or grab **anywhere inside the selection frame** (the cursor changes to ✥), and everything selected moves as one. The spacing between the parts never changes; the part you grab lands on the grid. Hold <kbd>Alt</kbd> while dragging to move freely without grid snapping. Wires that run between moved parts keep their bends. A plain click inside the frame deselects.
+- **Nudge**: arrow keys move the selection one grid step (5 mm); <kbd>Shift</kbd>+arrow moves 1 mm.
 - **Pan**: right-drag or middle-drag. Zoom with the mouse wheel.
 - **Rotate** <kbd>R</kbd> · **Duplicate** <kbd>Ctrl</kbd>+<kbd>D</kbd> · **Delete** <kbd>Del</kbd> · **Undo / Redo** <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd>.
 - Tags (K1, S1, H1 …) are numbered automatically and can be changed in the properties.
@@ -171,7 +173,8 @@ A **“!”** badge on a part shows a problem. Hover it to read it, or see the l
 | <kbd>Ctrl</kbd>+<kbd>A</kbd> | Select all |
 | <kbd>Alt</kbd>+click | Select one part inside a group |
 | Arrow keys | Nudge the selection 5 mm (<kbd>Shift</kbd> = 1 mm) |
-| Left-drag on empty board | Sweep-select (live) |
+| Left-drag on empty board | Rectangle select (live); the frame stays fixed after release |
+| Drag inside the selection frame | Move the whole selection (<kbd>Alt</kbd> = no snapping) |
 | Right-drag / middle-drag | Pan |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> | Undo / redo |
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>O</kbd> | Save / open circuit |

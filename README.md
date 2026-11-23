@@ -44,7 +44,7 @@ Most circuit simulators draw symbols. Control Lab draws the actual hardware: a 2
 | 🩺 **Circuit Check** | Runs on every **Run**. It traces every coil, lamp and sensor back to the supply, reports wrong or missing connections with an exact fix, highlights them on the board, and lists what each load is waiting for. |
 | 🤖 **Trace with AI** | When the simulator is opened from its claude.ai link, Claude can trace the whole circuit and tell you which wire to move. |
 | 🔧 **Multimeter** | V DC / V AC between any two terminals, plus Ω and continuity on the de-energised circuit (e.g. MY4 coil ≈ 650 Ω). |
-| 🗂️ **Select, group, align** | Sweep over parts with the left button to select them live, group them (<kbd>Ctrl</kbd>+<kbd>G</kbd>) so they move and rotate as one, then align or distribute parts and groups with one click. |
+| 🗂️ **Select, group, align** | Drag a rectangle to select parts (it stays as a fixed frame when you release), drag inside the frame to move them all, group them (<kbd>Ctrl</kbd>+<kbd>G</kbd>) so they move and rotate as one, then align or distribute parts and groups with one click. |
 | 📐 **Wiring ducts** | Slotted ducts with length, width and depth set in **cm**. Wires are laid through the duct network automatically, each in its own lane, with the cover on or off. |
 | ⚠️ **Realistic faults** | Short circuits, overloads, wrong coil voltages, burnt lamps, welded contacts, reversed sensor polarity, too much current through reed switches and sensor outputs, air leaks, missing pilot pressure. |
 | 💾 **Circuit files** | Save as a `.ccs` file, or as a stand-alone `.html` that opens the simulator with your circuit on double-click. There's also a parts and wire shopping list. |
@@ -62,7 +62,7 @@ The simulator always opens on a clear board. **Restore my last work** in the rig
 
 | Step | What you do |
 |---|---|
-| **1 · Place** | Drag parts from the library on the left, or type in the search box. Sweep with the left button to select several, <kbd>Ctrl</kbd>+<kbd>G</kbd> to group them, and use **Align** in the right panel to line them up. Right-drag pans the board. |
+| **1 · Place** | Drag parts from the library on the left, or type in the search box. Drag a rectangle to select several, drag inside the frame to move them together, <kbd>Ctrl</kbd>+<kbd>G</kbd> to group them, and use **Align** in the right panel to line them up. Right-drag pans the board. |
 | **2 · Wire** | Click a screw terminal, then another one. Click empty space on the way to add bends. Tubes start from the blue push-in ports. |
 | **3 · Set up** | Click a part to change its settings (coil voltage, contacts, colour, bore and stroke, sensor type…). The panel also shows live readings and real wiring notes. |
 | **4 · Run** | **▶ Run** or <kbd>Space</kbd>. Press buttons, put objects in front of sensors, and operate the valves' manual overrides. |
