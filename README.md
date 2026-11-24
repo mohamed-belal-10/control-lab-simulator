@@ -1,7 +1,7 @@
 # ⚡ Control Lab: a real-parts electro-pneumatic simulator
 
-[![Deploy website](https://github.com/YOUR-USERNAME/control-lab-simulator/actions/workflows/deploy.yml/badge.svg)](https://github.com/YOUR-USERNAME/control-lab-simulator/actions/workflows/deploy.yml)
-[![Tests](https://github.com/YOUR-USERNAME/control-lab-simulator/actions/workflows/tests.yml/badge.svg)](https://github.com/YOUR-USERNAME/control-lab-simulator/actions/workflows/tests.yml)
+[![Deploy website](https://github.com/mohamed-belal-10/control-lab-simulator/actions/workflows/deploy.yml/badge.svg)](https://github.com/mohamed-belal-10/control-lab-simulator/actions/workflows/deploy.yml)
+[![Tests](https://github.com/mohamed-belal-10/control-lab-simulator/actions/workflows/tests.yml/badge.svg)](https://github.com/mohamed-belal-10/control-lab-simulator/actions/workflows/tests.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Build, wire, run and troubleshoot relay and electro-pneumatic control circuits with the real components you will use on the bench, right in your browser.**
@@ -10,7 +10,7 @@ Most circuit simulators draw symbols. Control Lab draws the actual hardware: a 2
 
 <p align="center"><img src="docs/images/hero.png" alt="Automatic A+ A− cycle with relays, a double-solenoid valve and reed switches" width="100%"></p>
 
-> 🌐 **Live site:** `https://YOUR-USERNAME.github.io/control-lab-simulator/` (after you publish, see [Publishing](#publishing-on-github-pages))
+> 🌐 **Try it live:** **<https://mohamed-belal-10.github.io/control-lab-simulator/>**
 > 🎬 **2½-minute tutorial:** [docs/media/tutorial.mp4](docs/media/tutorial.mp4)
 
 ---
@@ -52,7 +52,7 @@ Most circuit simulators draw symbols. Control Lab draws the actual hardware: a 2
 
 ## Quick start
 
-- **Online:** open the published site (see [Publishing](#publishing-on-github-pages)).
+- **Online:** open **<https://mohamed-belal-10.github.io/control-lab-simulator/>**.
 - **Offline:** download `index.html` from the site (or build it with `python build.py`) and double-click it.
 - **First steps:** open **Examples**, load *“4 · Automatic A+ A− with reed switches”*, press **▶ Run**, then press the green **START** button on the board.
 
@@ -170,7 +170,7 @@ Details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 python build.py                              # → dist/index.html  (Python 3.8+, nothing to install)
 pip install -r tests/requirements.txt        # optional: browser tests
 python -m playwright install chromium
-python tests/test_simulator.py               # 17 tests: physics, circuit check, files, ducts
+python tests/test_simulator.py               # 26 tests: physics, circuit check, files, ducts, selection
 python tools/generate_docs_assets.py         # refresh docs/PARTS.md, screenshots, examples/*.ccs
 ```
 
@@ -178,13 +178,7 @@ To work on the code, open `dist/index.html` in a browser after each `python buil
 
 ## Publishing on GitHub Pages
 
-1. Create an empty repository on GitHub named `control-lab-simulator`.
-2. Push this folder to it (GitHub Desktop: *Add local repository → Publish*, or the commands in [docs/PUBLISHING.md](docs/PUBLISHING.md)).
-3. On GitHub, go to **Settings → Pages → Build and deployment → Source: GitHub Actions**.
-4. Wait about a minute for the **Deploy website** workflow to finish. The site is then live at `https://YOUR-USERNAME.github.io/control-lab-simulator/`.
-5. Replace `YOUR-USERNAME` in this README with your GitHub user name.
-
-Every push to `main` rebuilds and redeploys the site automatically. Step-by-step instructions, including troubleshooting, are in **[docs/PUBLISHING.md](docs/PUBLISHING.md)**.
+The site is deployed by GitHub Actions to **<https://mohamed-belal-10.github.io/control-lab-simulator/>**. Every push to `main` rebuilds and redeploys the site automatically. Step-by-step instructions, including troubleshooting, are in **[docs/PUBLISHING.md](docs/PUBLISHING.md)**.
 
 ## Contributing
 
