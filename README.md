@@ -62,7 +62,7 @@ The simulator always opens on a clear board. **Restore my last work** in the rig
 
 | Step | What you do |
 |---|---|
-| **1 · Place** | Drag parts from the library on the left, or type in the search box. Drag a rectangle to select several, drag inside the frame to move them together, <kbd>Ctrl</kbd>+<kbd>G</kbd> to group them, and use **Align** in the right panel to line them up. Right-drag pans the board. |
+| **1 · Place** | Drag parts from the library on the left, or type in the search box. Drag a rectangle to select several, drag inside the frame to move them together, <kbd>Ctrl</kbd>+<kbd>G</kbd> to group them, and use **Align** in the right panel to line them up. Right-drag pans the board. The tabs on the board edges (<kbd>[</kbd> / <kbd>]</kbd>) hide or show the side panels for more room. |
 | **2 · Wire** | Click a screw terminal, then another one. Click empty space on the way to add bends. Tubes start from the blue push-in ports. |
 | **3 · Set up** | Click a part to change its settings (coil voltage, contacts, colour, bore and stroke, sensor type…). The panel also shows live readings and real wiring notes. |
 | **4 · Run** | **▶ Run** or <kbd>Space</kbd>. Press buttons, put objects in front of sensors, and operate the valves' manual overrides. |
@@ -170,7 +170,7 @@ Details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 python build.py                              # → dist/index.html  (Python 3.8+, nothing to install)
 pip install -r tests/requirements.txt        # optional: browser tests
 python -m playwright install chromium
-python tests/test_simulator.py               # 26 tests: physics, circuit check, files, ducts, selection
+python tests/test_simulator.py               # 27 tests: physics, circuit check, files, ducts, selection, panels
 python tools/generate_docs_assets.py         # refresh docs/PARTS.md, screenshots, examples/*.ccs
 ```
 

@@ -8,6 +8,8 @@
 - **Groups:** <kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd>. A group selects, moves, rotates (about its centre) and duplicates as one unit; <kbd>Alt</kbd>+click picks a single member. Groups are saved in circuit files.
 - **Align** (left, centre, right, top, middle, bottom) and **distribute** (horizontal, vertical) for parts and groups, from the properties panel.
 - Arrow keys nudge the selection (5 mm, <kbd>Shift</kbd> = 1 mm).
+- Slim scrollbars in the dark theme colours.
+- **Collapsible side panels:** tabs on the board edges, or <kbd>[</kbd> / <kbd>]</kbd>, hide and show the parts library and the details panel. The circuit stays in place on screen and the choice is remembered.
 
 ## 1.0.0 — first public release
 

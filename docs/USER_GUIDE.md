@@ -28,6 +28,7 @@ This guide walks through every tool in Control Lab. For a 2½-minute visual tour
 |---|---|
 | **Toolbar** (top) | New, Open, Save, Examples, Parts list, 🩺 Check · undo/redo/rotate/duplicate/delete · Edit / Multimeter tool · wire colour · ▶ Run, ■ Reset, speed, *flow* (animate current), *via ducts* (auto-route wires) · **?** help |
 | **Parts library** (left) | All parts by category, with a search box. Drag a part onto the board, or click it to drop it in the middle. |
+| **Panel tabs** | The small tabs on the left and right edges of the board hide or show the parts library and the details panel (also <kbd>[</kbd> and <kbd>]</kbd>), so you get more room for the circuit. The circuit stays where it is on screen, and the choice is remembered next time. |
 | **Board** (centre) | Left-drag on empty space to select, right-drag (or middle-drag) to pan, use the mouse wheel to zoom, and press <kbd>F</kbd> to fit everything on screen. The 🩺 chip appears top-left after **Run**. |
 | **Properties** (right) | Settings for the selected part or wire, live readings, real wiring notes and a terminal list. With nothing selected, it shows the fault list and quick-start tips. |
 | **Status bar** (bottom) | Simulation state, supply voltage and current, and the error/warning count. |
@@ -180,6 +181,7 @@ A **“!”** badge on a part shows a problem. Hover it to read it, or see the l
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>O</kbd> | Save / open circuit |
 | <kbd>M</kbd> / <kbd>S</kbd> | Multimeter / edit tool |
 | <kbd>F</kbd> | Fit the circuit on screen |
+| <kbd>[</kbd> / <kbd>]</kbd> | Hide / show the parts library / the details panel |
 | <kbd>Esc</kbd> | Cancel the wire being drawn, clear the selection, close dialogs |
 
 ## Wiring conventions used

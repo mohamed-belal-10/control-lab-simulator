@@ -137,6 +137,19 @@ async def main() -> int:
         ok = mid == ['L1,L2', 1] and sel3 == 'L1,L2,L3' and moved_together and frame_ok and abs(v1[0] - v0 - 80) < 2 and v1[1] == 3
         failures += 0 if ok else 1
         print(f"{'PASS' if ok else 'FAIL'}  mouse: rectangle selects live, freezes on release, frame-drag moves all, right-drag pans" + ('' if ok else f'  ->  mid={mid} fr={fr} sel3={sel3} d={d} f0={f0} f1={f1} pan={v1[0]-v0} sel={v1[1]}'))
+        # side panels open / close: board widens, circuit stays put on screen, choice remembered
+        r = await page.evaluate("""() => { const st = document.getElementById('stage'), w0 = st.getBoundingClientRect().width;
+            const pt = () => { const m = document.getElementById('world').getScreenCTM(); return [m.e, m.f]; }, p0 = pt();
+            document.getElementById('tabLeft').click(); CCS.ui.togglePanel('right');
+            const w1 = st.getBoundingClientRect().width, p1 = pt(), hidden = getComputedStyle(document.getElementById('palette')).visibility;
+            return [w1 - w0, Math.abs(p1[0] - p0[0]) + Math.abs(p1[1] - p0[1]), hidden]; }""")
+        await page.reload(); await page.wait_for_timeout(400); await page.evaluate(PRELUDE)
+        kept = await page.evaluate("() => [document.getElementById('app').classList.contains('no-left'), document.getElementById('app').classList.contains('no-right')]")
+        await page.keyboard.press('['); await page.keyboard.press(']')
+        back = await page.evaluate("() => document.getElementById('app').className")
+        ok = r[0] > 500 and r[1] < 1 and r[2] == 'hidden' and kept == [True, True] and 'no-' not in back
+        failures += 0 if ok else 1
+        print(f"{'PASS' if ok else 'FAIL'}  side panels hide/show, keep the view, are remembered" + ('' if ok else f'  ->  {r} kept={kept} back={back!r}'))
         # the example circuit files in examples/ must open
         for f in sorted((ROOT / 'examples').glob('*.ccs')):
             n = await page.evaluate("t => { CCS.ui.loadJSON(CCS.ui.parseCircuitFile(t)); return CCS.circuit.parts.length; }", f.read_text(encoding='utf-8'))

@@ -3,10 +3,19 @@
   --acc:#3fa3ff; --ok:#3ddc84; --warn:#ffcc33; --err:#ff4d5e; --run:#22c55e;
 }
 *{box-sizing:border-box}
+/* slim scrollbars in the theme colours (Chrome/Edge/Safari + Firefox) */
+@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:#3a4f86 transparent}}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#33467a;border-radius:8px;border:2px solid var(--panel);background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:#4a64a8;background-clip:padding-box}
+::-webkit-scrollbar-thumb:active{background:var(--acc);background-clip:padding-box}
+::-webkit-scrollbar-button{display:none;width:0;height:0}
+::-webkit-scrollbar-corner{background:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:13px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
 button,select,input{font:inherit;color:inherit}
 .hidden{display:none!important}
-#app{display:grid;grid-template-columns:230px 1fr 290px;grid-template-rows:auto 1fr 28px;height:100vh}
+#app{--lw:230px;--rw:290px;display:grid;grid-template-columns:var(--lw) 1fr var(--rw);grid-template-rows:auto 1fr 28px;height:100vh}
 #topbar{grid-column:1/4;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
 .brand{display:flex;gap:8px;align-items:center;margin-right:8px}
 .brand .logo{font-size:22px;background:linear-gradient(135deg,#ffcc33,#ff7a00);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -34,6 +43,15 @@ button,select,input{font:inherit;color:inherit}
 .pitem svg{width:100%;height:58px;display:block}
 .pitem span{font-size:10.5px;color:var(--txt);display:block;line-height:1.15;margin-top:2px}
 #stage{position:relative;overflow:hidden}
+#app.no-left{--lw:0px}#app.no-right{--rw:0px}
+#app.no-left #palette,#app.no-right #props{visibility:hidden;padding:0;border:0;overflow:hidden}
+.ptab{position:absolute;top:50%;transform:translateY(-50%);z-index:5;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 3px;background:var(--panel);border:1px solid var(--line);color:var(--mut);cursor:pointer;font-size:11px;line-height:1}
+.ptab:hover{color:var(--txt);border-color:var(--acc)}
+.ptab i{font-style:normal;font-size:16px;font-weight:700}
+.ptab span{writing-mode:vertical-rl;letter-spacing:.06em;text-transform:uppercase;display:none}
+.ptab.left{left:0;border-left:0;border-radius:0 8px 8px 0}.ptab.right{right:0;border-right:0;border-radius:8px 0 0 8px}
+#app.no-left .ptab.left span,#app.no-right .ptab.right span{display:block}
+#app.no-left .ptab.left,#app.no-right .ptab.right{color:var(--txt);background:var(--panel2)}
 #canvas{width:100%;height:100%;display:block;touch-action:none;user-select:none}
 #canvas.panning{cursor:grabbing}
 #canvas.wiring{cursor:crosshair}
@@ -113,7 +131,7 @@ button,select,input{font:inherit;color:inherit}
 .help h4{margin:10px 0 4px}
 .help ul{margin:0;padding-left:18px}
 kbd{background:#0a1228;border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:11px}
-@media (max-width:900px){#app{grid-template-columns:150px 1fr}#props{display:none}}
+@media (max-width:900px){#app{--lw:150px;--rw:0px}#app.no-left{--lw:0px}#props,#tabRight{display:none}}
 
 #docChip{position:absolute;top:10px;left:10px;border-radius:16px;padding:6px 12px;font-weight:600;cursor:pointer;border:1px solid;box-shadow:0 4px 14px #0007}
 #docChip.err{background:#4a0f18;border-color:#ff4d5e;color:#ffd0d5}

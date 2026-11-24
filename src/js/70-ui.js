@@ -659,6 +659,7 @@ If the wiring is correct, say so and tell the student what to press to make it r
 <li>Groups: <kbd>Ctrl+G</kbd> groups the selection, <kbd>Ctrl+Shift+G</kbd> ungroups. A group selects, moves, rotates and duplicates as one; <kbd>Alt</kbd>+click picks a single member.</li>
 <li>Align &amp; distribute: select several parts/groups and use the buttons in the right panel. Arrow keys nudge (<kbd>Shift</kbd> = 1 mm).</li>
 <li><kbd>R</kbd> rotate, <kbd>Del</kbd> delete, <kbd>Ctrl+D</kbd> duplicate, <kbd>Ctrl+Z/Y</kbd> undo/redo.</li>
+<li>Side panels: the small tabs on the board edges (or <kbd>[</kbd> and <kbd>]</kbd>) hide and show the parts library and the details panel.</li>
 <li>Pan: hold the right (or middle) button and drag. Zoom: mouse wheel. <kbd>F</kbd> fits the board.</li></ul>
 <h4>Simulate</h4><ul><li><kbd>Space</kbd> or ▶ Run energises the circuit. Push buttons work while held; latching parts toggle on click. Click the dashed zone of a sensor to put an object in front of it.</li>
 <li>Glowing wires carry current; white dashes show its direction (AC oscillates). Pressurised tubes are bright blue.</li>
@@ -673,8 +674,26 @@ If the wiring is correct, say so and tell the student what to press to make it r
   }
 
   /* ------------------------------------------------------------ init */
+  /* ------------------------------------------------------------ side panels (open / close) */
+  function setPanel(side, open, keepView = true) {
+    const app = $('app'), cls = side === 'left' ? 'no-left' : 'no-right';
+    if (app.classList.contains(cls) === !open) return;
+    const before = $('stage').getBoundingClientRect().left;
+    app.classList.toggle(cls, !open);
+    // keep the circuit where it is on screen while the board grows or shrinks
+    if (keepView) { CCS.view.x += before - $('stage').getBoundingClientRect().left; CCS.view.apply(); }
+    const t = $(side === 'left' ? 'tabLeft' : 'tabRight');
+    t.querySelector('i').textContent = (side === 'left') === open ? '‹' : '›';
+    t.title = (open ? 'Hide' : 'Show') + (side === 'left' ? ' the parts library ( [ )' : ' the details panel ( ] )');
+    try { localStorage.setItem('ccs.panels', JSON.stringify({ left: !app.classList.contains('no-left'), right: !app.classList.contains('no-right') })); } catch (e) { }
+  }
+  const togglePanel = side => setPanel(side, $('app').classList.contains(side === 'left' ? 'no-left' : 'no-right'));
+
   function init() {
     buildPalette();
+    $('tabLeft').onclick = () => togglePanel('left');
+    $('tabRight').onclick = () => togglePanel('right');
+    try { const pz = JSON.parse(localStorage.getItem('ccs.panels') || '{}'); if (pz.left === false) setPanel('left', false, false); if (pz.right === false) setPanel('right', false, false); } catch (e) { }
     $('paletteSearch').addEventListener('input', e => buildPalette(e.target.value));
     const sw = $('wireColors');
     CCS.wireColors.forEach(([v, n]) => {
@@ -726,12 +745,14 @@ If the wiring is correct, say so and tell the student what to press to make it r
       else if (k === 'm') setTool(ui.tool === 'meter' ? 'select' : 'meter');
       else if (k === 's' && !e.ctrlKey) setTool('select');
       else if (k === 'f') CCS.view.fit();
+      else if (e.key === '[') togglePanel('left');
+      else if (e.key === ']') togglePanel('right');
     });
     syncRunBtn();
   }
   function emptyFrame() { const el = $('emptyHint'); if (el) el.classList.toggle('hidden', circ.parts.length > 0); }
   function frame() { pruneSel(); for (const f of [meterFrame, propsFrame, statusFrame, syncRunBtn, emptyFrame]) { try { f(); } catch (e) { console.error(e); } } }
 
-  Object.assign(ui, { init, frame, selFrame, hint, select, loadJSON, addPart, cmds, setTool, doctorDialog, autoDoctor, standaloneHTML, parseCircuitFile });
+  Object.assign(ui, { init, frame, selFrame, setPanel, togglePanel, hint, select, loadJSON, addPart, cmds, setTool, doctorDialog, autoDoctor, standaloneHTML, parseCircuitFile });
   return ui;
 })();
